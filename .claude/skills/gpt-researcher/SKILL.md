@@ -9,12 +9,13 @@ This skill allows you to utilize the GPT Researcher Python package as an autonom
 
 ## Setup
 
-1.  **Dependencies:** Requires `gpt-researcher` and its dependencies.
+1. **Dependencies:** Requires `gpt-researcher` and its dependencies.
+
     ```bash
     pip install gpt-researcher python-dotenv
     ```
 
-2.  **Configuration:** GPT Researcher needs API keys for an LLM (e.g., OpenAI) and a Search Provider (Tavily is recommended).
+2. **Configuration:** GPT Researcher needs API keys for an LLM (e.g., OpenAI) and a Search Provider (Tavily is recommended).
 
     ```bash
     # Prompt user for keys if not set (assuming OpenAI and Tavily)

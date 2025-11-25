@@ -9,12 +9,13 @@ This skill integrates Jina AI's Reader (r.jina.ai) and Search (s.jina.ai) APIs t
 
 ## Setup
 
-1.  **Dependencies:** Requires `requests`.
+1. **Dependencies:** Requires `requests`.
+
     ```bash
     pip install requests python-dotenv
     ```
 
-2.  **API Key Configuration (Recommended):** Jina APIs offer higher limits with an API key (JINA_API_KEY).
+2. **API Key Configuration (Recommended):** Jina APIs offer higher limits with an API key (JINA_API_KEY).
 
     ```bash
     read -p "Enter your Jina API key (optional, press Enter to skip): " JINA_KEY

@@ -99,6 +99,42 @@ Deep research agents go beyond simple Q&A—they autonomously plan research stra
 - **[ScholarQA](https://github.com/allenai/scholarqa)** — Academic literature synthesis (DR-Tulu beats GPT-4).
 - **[ARC-AGI](https://arcprize.org)** — Abstract reasoning (o3: 87.5%).
 
+## Claude Code Skills
+
+This repository includes ready-to-use **Claude Code Skills** for several key deep research APIs and frameworks. These skills enable you to leverage powerful research agents directly from Claude Code with simple Python scripts.
+
+### Available Skills
+
+| Skill Name | Type | Description |
+|------------|------|-------------|
+| [perplexity-sonar](.claude/skills/perplexity-sonar) | Commercial API | Real-time, citation-backed answers using Perplexity Sonar API |
+| [xai-grok](.claude/skills/xai-grok) | Commercial API | Real-time web and X (Twitter) search with Grok Agent Tools |
+| [exa-research](.claude/skills/exa-research) | Commercial API | Neural search, content retrieval, and automated research |
+| [tavily-search](.claude/skills/tavily-search) | Commercial API | LLM-optimized real-time web search for RAG applications |
+| [jina-ai](.claude/skills/jina-ai) | Commercial API | URL to Markdown conversion and web search |
+| [gpt-researcher](.claude/skills/gpt-researcher) | Open Source | Autonomous research agent for comprehensive reports |
+| [stanford-storm](.claude/skills/stanford-storm) | Open Source | Wikipedia-style article generation with citations |
+| [openai-deep-research](.claude/skills/openai-deep-research) | Commercial API | Launch OpenAI Deep Research (o3/o4) autonomous research runs |
+| [langchain-deep-research](.claude/skills/langchain-deep-research) | Open Source | Iterative research with reflection and knowledge gap analysis |
+| [smolagents](.claude/skills/smolagents) | Open Source | Code-based agentic framework with 30% token efficiency gain |
+
+### Installation
+
+Each skill directory contains:
+
+- `SKILL.md` - Complete documentation and usage examples
+- `scripts/` - Python implementation scripts
+- `requirements.txt` - Python dependencies
+
+To install a skill:
+
+```bash
+cd .claude/skills/<skill-name>
+pip install -r requirements.txt
+```
+
+For detailed documentation on Claude Code Skills, see [CLAUDE_SKILLS.md](CLAUDE_SKILLS.md).
+
 ## Contributing
 
 Contributions welcome! Please read the [contribution guidelines](CONTRIBUTING.md) first. Ensure all additions:
