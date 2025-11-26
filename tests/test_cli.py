@@ -1,0 +1,52 @@
+import re
+from pathlib import Path
+
+import pytest
+
+from awesome_deep_research import cli
+from awesome_deep_research.cli import PromptExample
+
+
+def test_load_prompt_examples_contains_expected_ids():
+    prompts = cli.load_prompt_examples()
+    assert prompts, "Expected at least one prompt example from taxonomy file"
+
+    prompt_ids = {prompt.identifier for prompt in prompts}
+    assert "domain-mapping-01" in prompt_ids
+    assert "source-retrieval-01" in prompt_ids
+
+
+def test_next_output_path_increments(tmp_path: Path):
+    first = cli.next_output_path(tmp_path, "perplexity-sonar")
+    assert first.name == "OUTPUT-PERPLEXITY-SONAR-0001.md"
+    first.write_text("dummy", encoding="utf-8")
+
+    second = cli.next_output_path(tmp_path, "perplexity-sonar")
+    assert second.name == "OUTPUT-PERPLEXITY-SONAR-0002.md"
+
+
+def test_build_user_prompt_includes_extra_instructions():
+    prompt = PromptExample(identifier="custom", category="Domain Mapping", text="Analyze the domain.")
+    extra = "Prioritize regulatory perspectives."
+
+    user_prompt = cli.build_user_prompt(prompt, extra)
+
+    assert "## Additional Instructions" in user_prompt
+    assert extra in user_prompt
+    assert re.search(r"Domain Mapping", user_prompt)
+
+
+@pytest.mark.parametrize("mode", ["default", "relative", "absolute"])
+def test_ensure_output_dir_creates_directories(tmp_path: Path, monkeypatch, mode: str):
+    monkeypatch.setattr(cli, "DEFAULT_OUTPUT_DIR", tmp_path / "default")
+
+    if mode == "default":
+        requested = None
+    elif mode == "relative":
+        requested = str(Path("outputs-test"))
+    else:
+        requested = str((tmp_path / "absolute").resolve())
+
+    output_dir = cli.ensure_output_dir(requested)
+    assert output_dir.exists()
+    assert output_dir.is_dir()

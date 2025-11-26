@@ -1,0 +1,37 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+awesome_deep_research.egg-info
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+
+# Testing
+coverage.xml
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation output
+repomix-output.*
+
+# Benchmark results
+benchmark/results/*
+!benchmark/results/.gitignore
+!benchmark/results/README.md
+
+# STORM output
+storm_output/

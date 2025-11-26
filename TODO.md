@@ -8,3 +8,5 @@
    - Use the aggregated reports to bootstrap a rubric to evaluate them
    - Evaluate each of the APIs and frameworks based on the rubric
    - Create a final report that ranks the APIs and frameworks based on the rubric
+
+6. Update with all of the models from https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard

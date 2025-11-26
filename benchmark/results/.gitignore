@@ -1,0 +1,8 @@
+# Ignore all benchmark results
+*
+
+# But keep this .gitignore
+!.gitignore
+
+# And keep README
+!README.md

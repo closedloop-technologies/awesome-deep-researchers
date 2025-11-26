@@ -135,6 +135,34 @@ pip install -r requirements.txt
 
 For detailed documentation on Claude Code Skills, see [CLAUDE_SKILLS.md](CLAUDE_SKILLS.md).
 
+## Headless Claude CLI Runner
+
+Run Claude Code skills without the IDE using the `adr` CLI (exposed via `python -m awesome_deep_research.cli`). The tool wraps the `claude` binary and saves Markdown reports to disk.
+
+1. **Prerequisites**
+
+   - Install the [Claude Code CLI](https://www.anthropic.com/claude)
+   - Configure API keys required by each skill (see `.claude/skills/<skill>/SKILL.md`)
+   - Optional: install skill-specific dependencies listed in each `requirements.txt`
+
+2. **Usage**
+
+   ```bash
+   # List installed Claude Code skills
+   python -m awesome_deep_research.cli list-skills
+
+   # List canonical research prompts sourced from docs/taxonomy-and-examples.md
+   python -m awesome_deep_research.cli list-prompts
+
+   # Run a headless research job and store the result in outputs/
+   python -m awesome_deep_research.cli run \
+     --skill perplexity-sonar \
+     --prompt-id domain-mapping-01 \
+     --output-dir outputs
+   ```
+
+   The CLI writes successive runs to `OUTPUT-{SKILL}-{NNNN}.md`. Pass `--prompt-text "..."` for ad-hoc briefs, `--model` to target a specific Claude model, and `--extra-instructions` to append custom guidance.
+
 ## Contributing
 
 Contributions welcome! Please read the [contribution guidelines](CONTRIBUTING.md) first. Ensure all additions:
