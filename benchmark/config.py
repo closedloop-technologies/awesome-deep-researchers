@@ -4,9 +4,8 @@ from pathlib import Path
 
 # Paths
 REPO_ROOT = Path(__file__).parent.parent
-SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
-AGENTS_SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
-SKILLS_DIRS = [AGENTS_SKILLS_DIR, SKILLS_DIR]
+SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
+SKILLS_DIRS = [SKILLS_DIR]
 TAXONOMY_FILE = REPO_ROOT / "docs" / "taxonomy-and-examples.md"
 RESULTS_DIR = REPO_ROOT / "benchmark" / "results"
 

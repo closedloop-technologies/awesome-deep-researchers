@@ -1,8 +1,7 @@
 # Codex Skills
 
-This directory is the Codex-facing skill bundle for the repository. The older
-`.claude/skills` tree remains available for Claude Code compatibility; new
-Codex-oriented skills should be added here and registered in
+This directory is the supported agent skill bundle for the repository. Skill
+docs, runnable scripts, requirements, and tests live here and are registered in
 `benchmark/utils.py`.
 
 ## Current Skills
@@ -27,9 +26,8 @@ Codex-oriented skills should be added here and registered in
   - `stanford-storm`
   - `smolagents`
 
-`you-research`, `gemini-deep-research`, and `okf-normalize-research` include
-`.agents` runnable scripts. Several other providers reuse the legacy
-`.claude/skills` scripts while keeping Codex-facing call guidance here.
+Provider skills include runnable scripts, requirements, and tests under this
+tree so benchmark and fan-out commands use the supported agent skill paths.
 
 ## Adding a Skill
 

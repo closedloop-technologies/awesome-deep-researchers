@@ -11,7 +11,7 @@ research endpoint.
 ## Environment
 
 ```bash
-op run --env-file .env.adr -- python .claude/skills/exa-research/scripts/exa_tools.py \
+op run --env-file .env.adr -- python .agents/skills/exa-research/scripts/exa_tools.py \
   search "deepresearch the deepresearchers" \
   --num-results 5 \
   --highlights

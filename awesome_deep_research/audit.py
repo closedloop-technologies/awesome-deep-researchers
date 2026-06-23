@@ -30,9 +30,19 @@ REQUIRED_PROVIDER_SKILLS = {
 REQUIRED_OP_EXAMPLE_SKILLS = REQUIRED_PROVIDER_SKILLS - {"custom-data-deep-research"}
 REQUIRED_AGENTS_RUNNABLE_SKILLS = {
     "custom-data-deep-research": "validate_manifest.py",
+    "exa-research": "exa_tools.py",
     "gemini-deep-research": "gemini_research.py",
+    "gpt-researcher": "run_research.py",
+    "jina-ai": "jina_tools.py",
+    "langchain-deep-research": "research.py",
     "you-research": "you_research.py",
     "okf-normalize-research": "normalize_to_okf.py",
+    "openai-deep-research": "run_deep_research.py",
+    "perplexity-sonar": "ask.py",
+    "smolagents": "agent.py",
+    "stanford-storm": "run_storm.py",
+    "tavily-search": "tavily_search.py",
+    "xai-grok": "grok_research.py",
 }
 REQUIRED_ENV_NAMES = {
     "OPENAI_API_KEY",

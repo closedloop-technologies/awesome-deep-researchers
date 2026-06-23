@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SKILLS_ROOT = REPO_ROOT / ".claude" / "skills"
+SKILLS_ROOT = REPO_ROOT / ".agents" / "skills"
 PROMPT_FILE = REPO_ROOT / "docs" / "taxonomy-and-examples.md"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs"
 
@@ -32,9 +32,7 @@ class SkillInfo:
 
 SKILL_ROOTS = [
     ("agents", REPO_ROOT / ".agents" / "skills"),
-    ("claude", REPO_ROOT / ".claude" / "skills"),
 ]
-SKILLS_ROOT = REPO_ROOT / ".claude" / "skills"
 
 
 def slugify(value: str) -> str:
@@ -96,7 +94,7 @@ def parse_skill_description(skill_dir: Path) -> str:
 def list_skills_command(_: argparse.Namespace) -> int:
     skills = load_skill_infos(include_documentation=True)
     if not skills:
-        print("No skills found under .agents/skills/ or .claude/skills/", file=sys.stderr)
+        print("No skills found under .agents/skills/", file=sys.stderr)
         return 1
 
     for name, skill in sorted(skills.items()):
@@ -344,11 +342,11 @@ def run_command(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="adr",
-        description="Awesome Deep Researchers CLI wrapper for headless Claude Code runs.",
+        description="Awesome Deep Researchers CLI wrapper for headless agent skill runs.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    list_skills = subparsers.add_parser("list-skills", help="List available .agents and Claude Code skills.")
+    list_skills = subparsers.add_parser("list-skills", help="List available .agents skills.")
     list_skills.set_defaults(func=list_skills_command)
 
     list_prompts = subparsers.add_parser(

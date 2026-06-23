@@ -139,8 +139,7 @@ addopts = [
 
 # ADD/UPDATE THESE CONFIGURATIONS:
 testpaths = [
-    "tests",           # For your main project tests (e.g., test_cli.py)
-    ".claude/skills"   # For the skill tests
+    "tests"            # Main project tests. Skill tests run through tox or explicit paths.
 ]
 # Define the integration marker used in your tests
 markers = [

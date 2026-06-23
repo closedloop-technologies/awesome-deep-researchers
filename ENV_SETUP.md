@@ -97,7 +97,7 @@ TAVILY_API_KEY=tvly-...      # Used by multiple skills
 
 ```bash
 # Test Tavily
-cd .claude/skills/tavily-search
+cd .agents/skills/tavily-search
 python scripts/tavily_search.py --query "test"
 
 # Test OpenAI Deep Research
@@ -211,7 +211,7 @@ OPENAI_API_KEY=sk-proj-abc123...
 ANTHROPIC_API_KEY=sk-ant-api03-xyz789...
 HF_TOKEN=hf_abc123...
 
-# Search Providers  
+# Search Providers
 TAVILY_API_KEY=tvly-abc123...
 EXA_API_KEY=exa_abc123...
 PERPLEXITY_API_KEY=pplx-abc123...
@@ -237,4 +237,4 @@ After setting up your environment:
 - [Benchmark System README](benchmark/README.md)
 - [Benchmark Quick Start](benchmark/QUICKSTART.md)
 - [Complete System Summary](benchmark/SUMMARY.md)
-- [Skills Documentation](.claude/skills/*/SKILL.md)
+- [Skills Documentation](.agents/skills/*/SKILL.md)

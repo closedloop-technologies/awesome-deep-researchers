@@ -5,7 +5,7 @@ Comprehensive benchmarking framework for evaluating deep research skills across 
 ## Overview
 
 This benchmark system:
-- **Dynamically discovers** runnable skills in `.agents/skills/` and `.claude/skills/`
+- **Dynamically discovers** runnable skills in `.agents/skills/`
 - **Extracts questions** from the research taxonomy document
 - **Runs each skill** on each question category
 - **Tracks metrics**: duration, cost, tokens, API calls
@@ -20,7 +20,7 @@ This benchmark system:
 ### Install Dependencies
 
 ```bash
-pip install -r ../.claude/skills/test-requirements.txt
+pip install -r ../.agents/skills/test-requirements.txt
 ```
 
 ### Run Full Benchmark
@@ -244,7 +244,6 @@ After collecting benchmark data, we will implement a scoring rubric that evaluat
 
 1. Place Codex skill docs in `.agents/skills/{skill-name}/SKILL.md`
 2. Place runnable skill code in `.agents/skills/{skill-name}/scripts/`
-   or legacy Claude Code skill code in `.claude/skills/{skill-name}/scripts/`
 3. Add `requirements.txt` with dependencies
 4. Confirm command wiring in `benchmark/utils.py`
 5. Add a tox environment when the skill has tests or runtime dependencies
@@ -284,7 +283,7 @@ SKILL_TIMEOUT = 1200  # 20 minutes
 Install all skill dependencies:
 
 ```bash
-pip install -r ../.claude/skills/test-requirements.txt
+pip install -r ../.agents/skills/test-requirements.txt
 ```
 
 ### API Rate Limits
@@ -318,7 +317,7 @@ jobs:
         with:
           python-version: '3.10'
       - name: Install dependencies
-        run: pip install -r .claude/skills/test-requirements.txt
+        run: pip install -r .agents/skills/test-requirements.txt
       - name: Run benchmark
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

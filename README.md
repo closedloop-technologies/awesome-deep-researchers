@@ -153,6 +153,11 @@ Each run creates `outputs/yyyy-mm-dd-hh-mm-ss-xxxx/` with
 - **[GAIA](https://huggingface.co/gaia-benchmark)** — Multi-step real-world task execution (Smolagents: 55.15%).
 - **[ScholarQA](https://github.com/allenai/scholarqa)** — Academic literature synthesis (DR-Tulu beats GPT-4).
 - **[ARC-AGI](https://arcprize.org)** — Abstract reasoning (o3: 87.5%).
+- **[DeepResearch Bench model inventory](docs/deepresearch-bench-leaderboard.md)** — Current model rows fetched from the Hugging Face DeepResearch-Bench leaderboard.
+
+The latest repository-level landscape run is saved in
+`research/2026-06-23-08-30-53-i62o/`, with raw provider outputs and
+`AGGREGATE_REPORT.md` for the rubric and ranking.
 
 ## What Makes an Agent Deep Research
 
@@ -205,24 +210,24 @@ python -m awesome_deep_research.op_env --template
 python -m awesome_deep_research.source_refresh
 ```
 
-## Claude Code Skills
+## Agent Skills
 
-This repository includes ready-to-use **Claude Code Skills** for several key deep research APIs and frameworks. These skills enable you to leverage powerful research agents directly from Claude Code with simple Python scripts.
+This repository includes ready-to-use **Agent Skills** for several key deep research APIs and frameworks. Skills live under `.agents/skills` and can be run through their scripts, benchmark tools, fan-out tooling, or the optional `adr` wrapper.
 
 ### Available Skills
 
 | Skill Name | Type | Description |
 |------------|------|-------------|
-| [perplexity-sonar](.claude/skills/perplexity-sonar) | Commercial API | Real-time, citation-backed answers using Perplexity Sonar API |
-| [xai-grok](.claude/skills/xai-grok) | Commercial API | Real-time web and X (Twitter) search with Grok Agent Tools |
-| [exa-research](.claude/skills/exa-research) | Commercial API | Neural search, content retrieval, and automated research |
-| [tavily-search](.claude/skills/tavily-search) | Commercial API | LLM-optimized real-time web search for RAG applications |
-| [jina-ai](.claude/skills/jina-ai) | Commercial API | URL to Markdown conversion and web search |
-| [gpt-researcher](.claude/skills/gpt-researcher) | Open Source | Autonomous research agent for comprehensive reports |
-| [stanford-storm](.claude/skills/stanford-storm) | Open Source | Wikipedia-style article generation with citations |
-| [openai-deep-research](.claude/skills/openai-deep-research) | Commercial API | Launch OpenAI Deep Research (o3/o4) autonomous research runs |
-| [langchain-deep-research](.claude/skills/langchain-deep-research) | Open Source | Iterative research with reflection and knowledge gap analysis |
-| [smolagents](.claude/skills/smolagents) | Open Source | Code-based agentic framework with 30% token efficiency gain |
+| [perplexity-sonar](.agents/skills/perplexity-sonar) | Commercial API | Real-time, citation-backed answers using Perplexity Sonar API |
+| [xai-grok](.agents/skills/xai-grok) | Commercial API | Real-time web and X (Twitter) search with Grok Agent Tools |
+| [exa-research](.agents/skills/exa-research) | Commercial API | Neural search, content retrieval, and automated research |
+| [tavily-search](.agents/skills/tavily-search) | Commercial API | LLM-optimized real-time web search for RAG applications |
+| [jina-ai](.agents/skills/jina-ai) | Commercial API | URL to Markdown conversion and web search |
+| [gpt-researcher](.agents/skills/gpt-researcher) | Open Source | Autonomous research agent for comprehensive reports |
+| [stanford-storm](.agents/skills/stanford-storm) | Open Source | Wikipedia-style article generation with citations |
+| [openai-deep-research](.agents/skills/openai-deep-research) | Commercial API | Launch OpenAI Deep Research (o3/o4) autonomous research runs |
+| [langchain-deep-research](.agents/skills/langchain-deep-research) | Open Source | Iterative research with reflection and knowledge gap analysis |
+| [smolagents](.agents/skills/smolagents) | Open Source | Code-based agentic framework with 30% token efficiency gain |
 
 ### Installation
 
@@ -235,26 +240,26 @@ Each skill directory contains:
 To install a skill:
 
 ```bash
-cd .claude/skills/<skill-name>
+cd .agents/skills/<skill-name>
 pip install -r requirements.txt
 ```
 
-For detailed documentation on Claude Code Skills, see [CLAUDE_SKILLS.md](CLAUDE_SKILLS.md).
+For detailed documentation, see each skill's `SKILL.md`.
 
-## Headless Claude CLI Runner
+## Headless Agent Skill Runner
 
-Run Claude Code skills without the IDE using the `adr` CLI (exposed via `python -m awesome_deep_research.cli`). The tool wraps the `claude` binary and saves Markdown reports to disk.
+Run agent skills without the IDE using the `adr` CLI (exposed via `python -m awesome_deep_research.cli`). The `run` command uses the Claude CLI as one execution backend and saves Markdown reports to disk.
 
 1. **Prerequisites**
 
    - Install the [Claude Code CLI](https://www.anthropic.com/claude)
-   - Configure API keys required by each skill (see `.claude/skills/<skill>/SKILL.md`)
+   - Configure API keys required by each skill (see `.agents/skills/<skill>/SKILL.md`)
    - Optional: install skill-specific dependencies listed in each `requirements.txt`
 
 2. **Usage**
 
    ```bash
-   # List installed Claude Code skills
+   # List installed agent skills
    python -m awesome_deep_research.cli list-skills
 
    # List canonical research prompts sourced from docs/taxonomy-and-examples.md

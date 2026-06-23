@@ -11,7 +11,7 @@ single commercial deep research API.
 ## Environment
 
 ```bash
-op run --env-file .env.adr -- python .claude/skills/gpt-researcher/scripts/run_research.py \
+op run --env-file .env.adr -- python .agents/skills/gpt-researcher/scripts/run_research.py \
   --query "AI for Science agents: current systems and evidence" \
   --report-type research_report
 ```

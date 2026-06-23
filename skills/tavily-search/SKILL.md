@@ -11,7 +11,7 @@ workflow. Tavily is usually a retriever, not a full report-writing agent.
 ## Environment
 
 ```bash
-op run --env-file .env.adr -- python .claude/skills/tavily-search/scripts/tavily_search.py \
+op run --env-file .env.adr -- python .agents/skills/tavily-search/scripts/tavily_search.py \
   --query "deepresearch the deepresearchers" \
   --search-depth basic \
   --max-results 5

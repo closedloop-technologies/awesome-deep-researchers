@@ -12,7 +12,7 @@ repo target is less than `$1` per task.
 ## Environment
 
 ```bash
-op run --env-file .env.adr -- python .claude/skills/openai-deep-research/scripts/run_deep_research.py \
+op run --env-file .env.adr -- python .agents/skills/openai-deep-research/scripts/run_deep_research.py \
   --prompt "deepresearch the deepresearchers" \
   --model o4-mini-deep-research \
   --effort low

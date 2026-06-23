@@ -12,7 +12,7 @@ results.
 ## Environment
 
 ```bash
-op run --env-file .env.adr -- python .claude/skills/jina-ai/scripts/jina_tools.py \
+op run --env-file .env.adr -- python .agents/skills/jina-ai/scripts/jina_tools.py \
   search "deepresearch the deepresearchers"
 ```
 

@@ -9,7 +9,7 @@ The comprehensive benchmark system has been successfully created and tested.
 ### Core Components
 
 1. **Benchmark Runner** (`benchmark.py`)
-   - Dynamically discovers all skills in `.claude/skills/`
+   - Dynamically discovers all skills in `.agents/skills/`
    - Extracts questions from taxonomy document
    - Runs each skill on each question
    - Tracks comprehensive metrics
@@ -240,7 +240,7 @@ Weighted combination (customizable):
 ## 🛠️ Extending the System
 
 ### Add a New Skill
-1. Place code in `.claude/skills/{skill-name}/scripts/`
+1. Place code in `.agents/skills/{skill-name}/scripts/`
 2. Add `requirements.txt`
 3. Skill auto-discovered on next run
 

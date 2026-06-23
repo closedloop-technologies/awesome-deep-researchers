@@ -4,7 +4,7 @@
 
 ```bash
 # From repo root
-pip install -r .claude/skills/test-requirements.txt
+pip install -r .agents/skills/test-requirements.txt
 ```
 
 ## 2. Set API Keys
@@ -97,7 +97,7 @@ Make sure you've exported the required API keys for the skills you're testing.
 ### "Module not found" errors
 Install dependencies:
 ```bash
-pip install -r ../.claude/skills/test-requirements.txt
+pip install -r ../.agents/skills/test-requirements.txt
 ```
 
 ## Next Steps
