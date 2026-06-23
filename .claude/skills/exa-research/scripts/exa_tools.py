@@ -3,61 +3,73 @@ import json
 import os
 import sys
 from dotenv import load_dotenv
+import requests
 
 try:
-    from exa_py import Exa
     # Exa's research endpoint uses OpenAI SDK compatibility
     from openai import OpenAI
 except ImportError:
-    print("Error: exa-py or openai not found. 'pip install exa-py openai'", file=sys.stderr)
-    sys.exit(1)
+    OpenAI = None
 
 # Load environment variables
 load_dotenv()
 
-EXA_API_KEY = os.getenv("EXA_API_KEY")
+EXA_SEARCH_URL = "https://api.exa.ai/search"
 
-def get_exa_client():
-    if not EXA_API_KEY:
+
+def get_exa_key():
+    api_key = os.getenv("EXA_API_KEY")
+    if not api_key:
         print("Error: EXA_API_KEY not found.", file=sys.stderr)
         sys.exit(1)
-    return Exa(EXA_API_KEY)
+    return api_key
+
+
+def get_exa_client():
+    get_exa_key()
 
 def search(query, num_results=5, highlights=False):
-    exa = get_exa_client()
+    api_key = get_exa_key()
     try:
-        # Configure content options
-        contents_options = {"highlights": True} if highlights else {"text": True}
-        response = exa.search_and_contents(
-            query,
-            num_results=num_results,
-            type="neural", # Default to neural search
-            **contents_options
+        contents = {"highlights": True} if highlights else {"text": True}
+        response = requests.post(
+            EXA_SEARCH_URL,
+            headers={"x-api-key": api_key, "Content-Type": "application/json"},
+            json={
+                "query": query,
+                "numResults": num_results,
+                "type": "auto",
+                "contents": contents,
+            },
+            timeout=60,
         )
+        response.raise_for_status()
+        payload = response.json()
 
         results = []
-        for result in response.results:
+        for result in payload.get("results", []):
             results.append({
-                "url": result.url,
-                "title": result.title,
+                "url": result.get("url"),
+                "title": result.get("title"),
                 # Return highlights or text based on the flag
-                "content": result.highlights if highlights else result.text,
+                "content": result.get("highlights") if highlights else result.get("text"),
             })
         return results
-    except Exception as e:
+    except requests.RequestException as e:
         print(f"Error during Exa search: {e}", file=sys.stderr)
         sys.exit(1)
 
 def research(query, model="exa-research"):
     # Research uses OpenAI compatible endpoint hosted by Exa
-    if not EXA_API_KEY:
-        print("Error: EXA_API_KEY not found.", file=sys.stderr)
+    api_key = get_exa_key()
+    if OpenAI is None:
+        print("Error: openai not found. 'pip install openai'", file=sys.stderr)
         sys.exit(1)
 
     # Initialize OpenAI client pointing to Exa's base URL
     client = OpenAI(
         base_url="https://api.exa.ai",
-        api_key=EXA_API_KEY
+        api_key=api_key
     )
 
     try:
@@ -76,19 +88,8 @@ def research(query, model="exa-research"):
 
 
 def find_similar(url, num_results=5):
-    exa = get_exa_client()
-    try:
-        response = exa.find_similar(url, num_results=num_results)
-        results = []
-        for result in response.results:
-            results.append({
-                "url": result.url,
-                "title": result.title,
-            })
-        return results
-    except Exception as e:
-        print(f"Error during Exa find_similar: {e}", file=sys.stderr)
-        sys.exit(1)
+    print("find_similar requires the exa-py SDK and is not used by the benchmark.", file=sys.stderr)
+    sys.exit(2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Use Exa AI for search and research.")

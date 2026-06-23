@@ -10,30 +10,39 @@ Deep research agents go beyond simple Q&A—they autonomously plan research stra
 - [Open Source Frameworks](#open-source-frameworks)
 - [Specialized Research Tools](#specialized-research-tools)
 - [Search & Retrieval Infrastructure](#search--retrieval-infrastructure)
+- [API Skill and Benchmark Status](#api-skill-and-benchmark-status)
 - [Benchmarks & Evaluation](#benchmarks--evaluation)
+- [What Makes an Agent Deep Research](#what-makes-an-agent-deep-research)
+- [Domain-Specific Deep Research](#domain-specific-deep-research)
+- [Codex Plugin and Skills](#codex-plugin-and-skills)
 
 ## Commercial APIs
 
 ### General Purpose Deep Research
 
-| Name | Type | Pricing | Key Features | Best For |
-|------|------|---------|--------------|----------|
-| [OpenAI Deep Research](https://openai.com/chatgpt) | API + Web UI | $10/1M input, $40/1M output tokens | o3-series reasoning, autonomous browsing, code execution, multimodal | Strategic analysis, legal research, complex synthesis |
-| [Google Gemini Deep Research](https://gemini.google.com) | Web UI + API | $2.50/1M input, $10/1M output tokens | Google Search integration, workspace grounding, plan visibility | Corporate intelligence, internal data research |
-| [Perplexity Sonar](https://perplexity.ai) | API + Web UI | $2/1M input, $8/1M output + $0.005/search | Real-time web index, sentence-level citations, live data | Market research, news synthesis, competitive intelligence |
-| [xAI Grok](https://grok.x.ai) | API + Web UI | $5/1M input, $15/1M output tokens | Real-time X/Twitter data, social sentiment analysis | Crisis monitoring, social sentiment, finance |
-| [You.com ARI](https://you.com) | API + Web UI | $15.00 per call | Analyzes 400+ sources, professional reports, data visualizations | Enterprise reports, analyst replacement |
-| [Anthropic Claude](https://anthropic.com) | API + Web UI | Variable | Multi-agent research system, parallel agent spawning | Production research workflows |
+Pricing and model availability change frequently. Use
+`.agents/skills/provider-source-index.md` and `python -m
+awesome_deep_research.source_refresh --check-links` before refreshing pricing
+or model guidance.
+
+| Name | Type | Under-$1 Benchmark Stance | Key Features | Best For |
+|------|------|---------------------------|--------------|----------|
+| [OpenAI Deep Research](https://openai.com/chatgpt) | API + Web UI | Prefer mini/deep-research models, low effort, concise prompts | reasoning models, autonomous browsing, code execution, multimodal | Strategic analysis, legal research, complex synthesis |
+| [Google Gemini Deep Research](https://gemini.google.com) | Web UI + API | Use grounded low-cost mode for smoke tests; reserve Deep Research Agent for deliberate live runs | Google Search integration, workspace/file grounding, asynchronous agent flow | Corporate intelligence, internal data research |
+| [Perplexity Sonar](https://perplexity.ai) | API + Web UI | Prefer the lowest Sonar model/search depth that returns citations | Real-time web index, citations, live data | Market research, news synthesis, competitive intelligence |
+| [xAI Grok](https://grok.x.ai) | API + Web UI | Use the lowest-cost model that supports the needed web or X search tools | real-time web/X tools, large context, social/news coverage | Crisis monitoring, social sentiment, finance |
+| [You.com Research](https://you.com) | API + Web UI | Use `research_effort=lite` for smoke tests; avoid high-depth tiers unless budgeted | research reports, source analysis, MCP/API options | Enterprise reports, analyst workflows |
+| [Anthropic Claude](https://anthropic.com) | API + Web UI | Use economical model settings inside OSS frameworks | multi-agent research patterns, long-context synthesis | Production research workflows |
 
 ### Specialized Deep Research
 
-| Name | Type | Pricing | Domain Focus | Key Features |
-|------|------|---------|--------------|--------------|
-| [Jina DeepSearch](https://jina.ai) | API | $2/1M input, $8/1M output | Middleware agent | OpenAI-compatible endpoint, search-read-reason loop |
-| [Exa Deep Search](https://exa.ai) | Search API | $5.00 per 1k searches | Neural search | Embedding-based retrieval, RAG-optimized content |
-| [Elicit](https://elicit.org) | Web UI | Paid tiers | Academic literature | Paper analysis, research synthesis |
-| [Consensus](https://consensus.app) | Web UI | Paid tiers | Scientific papers | Evidence-based answers from papers |
-| [Scite](https://scite.ai) | Web + API | Paid tiers | Citation analysis | Smart citations, claim verification |
+| Name | Type | Cost-Control Stance | Domain Focus | Key Features |
+|------|------|---------------------|--------------|--------------|
+| [Jina Reader/Search](https://jina.ai) | API | Use for bounded retrieval/reading, not as a full report writer | Middleware agent | URL-to-markdown, search-read-reason building block |
+| [Exa Search](https://exa.ai) | Search API | Cap searches and page reads | Neural search | Embedding-based retrieval, RAG-optimized content |
+| [Elicit](https://elicit.org) | Web UI | Use outside API benchmark unless an API key/path is added | Academic literature | Paper analysis, research synthesis |
+| [Consensus](https://consensus.app) | Web UI | Use outside API benchmark unless an API key/path is added | Scientific papers | Evidence-based answers from papers |
+| [Scite](https://scite.ai) | Web + API | Use outside API benchmark unless an API key/path is added | Citation analysis | Smart citations, claim verification |
 
 ## Open Source Frameworks
 
@@ -78,11 +87,11 @@ Deep research agents go beyond simple Q&A—they autonomously plan research stra
 
 ### Search APIs for Agents
 
-| Name | Type | Pricing | Key Features |
-|------|------|---------|--------------|
-| [Tavily](https://tavily.com) | Search API | $0.005/query | LLM-optimized, clean text output |
-| [SerpAPI](https://serpapi.com) | Search API | Variable | Google Search scraping, structured data |
-| [Exa](https://exa.ai) | Neural Search | $5/1k searches | Embedding-based, meaning-aware search |
+| Name | Type | Benchmark Stance | Key Features |
+|------|------|------------------|--------------|
+| [Tavily](https://tavily.com) | Search API | Use basic/fast depth and small result counts | LLM-optimized, clean text output |
+| [SerpAPI](https://serpapi.com) | Search API | Not wired into the current benchmark | Google Search scraping, structured data |
+| [Exa](https://exa.ai) | Neural Search | Cap search and content-read counts | Embedding-based, meaning-aware search |
 
 ### Vector & Knowledge Bases
 
@@ -92,12 +101,109 @@ Deep research agents go beyond simple Q&A—they autonomously plan research stra
 | [Pinecone](https://pinecone.io) | Vector DB | Context caching, RAG |
 | [ChromaDB](https://trychroma.com) | Vector DB | Embeddings storage |
 
+## API Skill and Benchmark Status
+
+The table below tracks whether this repo has a runnable skill for each API,
+whether the API has a verified live benchmark smoke, and the latest under-`$1`
+benchmark cost observed for the canonical `meta-deepresearchers` task. Quality
+is reported as a reproducible structural proxy: OKF bundle validity plus output
+size. It is not a human preference score.
+
+| API / Provider | Env field | Skill | Verified live smoke | Latest cost | Quality proxy |
+| --- | --- | --- | --- | ---: | --- |
+| Gemini grounded research | `GOOGLE_API_KEY`, optional `GOOGLE_CLOUD_PROJECT` | `gemini-deep-research` | Yes, 2026-06-23 | `$0.0034` | OKF valid; 5,679 tokens / 22,587 chars |
+| Perplexity Sonar | `PERPLEXITY_API_KEY` | `perplexity-sonar` | Yes, 2026-06-23 | `$0.0072` | OKF valid; 2,269 tokens / 8,944 chars |
+| You.com Research | `YOU_API_KEY` | `you-research` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 435 tokens / 1,610 chars |
+| Tavily Search | `TAVILY_API_KEY` | `tavily-search` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 563 tokens / 2,122 chars |
+| Exa Search | `EXA_API_KEY` | `exa-research` | Yes, 2026-06-23 | `$0.0111` | OKF valid; 3,732 tokens / 14,797 chars |
+| Jina Reader/Search | `JINA_API_KEY` | `jina-ai` | Yes, 2026-06-23 | `$0.2856` | OKF valid; 95,219 tokens / 380,746 chars |
+| OpenAI Deep Research | `OPENAI_API_KEY` | `openai-deep-research` | Not yet live-smoked in this repo | n/a | Skill and env path present |
+| xAI Grok | `XAI_API_KEY` | `xai-grok` | Not yet live-smoked in this repo | n/a | Skill and env path present |
+| You.com Finance Research | `YOU_API_KEY` | `you-research` with `--api finance` | Not in under-`$1` smoke suite | n/a | Domain-specific skill path present |
+| GPT Researcher | `OPENAI_API_KEY`, `TAVILY_API_KEY` | `gpt-researcher` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| LangChain Open Deep Research | `OPENAI_API_KEY`, optional model/search keys | `langchain-deep-research` | Not yet live-smoked in this repo | n/a | OSS framework skill present; server workflow |
+| Stanford STORM | `OPENAI_API_KEY`, `YDC_API_KEY` or `BING_SEARCH_API_KEY` | `stanford-storm` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| Smolagents | `OPENAI_API_KEY`, optional `HF_TOKEN` | `smolagents` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+
+Live smoke reports are written under `/tmp/adr-live-*-smoke/` during local
+verification. Re-run them with:
+
+```bash
+op run --env-file .env.adr -- python benchmark/live_smoke.py -v
+```
+
+To send one prompt to multiple API providers at the same time and keep the raw
+responses, use the fan-out script:
+
+```bash
+op run --env-file .env.adr -- python scripts/run_api_fanout.py \
+  --output-dir outputs \
+  "Deepresearch the deepresearchers. Keep each answer concise."
+
+printf '%s\n' "Compare AI-for-science research agents." | \
+  op run --env-file .env.adr -- python scripts/run_api_fanout.py --output-dir outputs
+```
+
+Each run creates `outputs/yyyy-mm-dd-hh-mm-ss-xxxx/` with
+`<provider>.response.txt`, `<provider>.stderr.txt`, and `summary.json`.
+
 ## Benchmarks & Evaluation
 
 - **[Humanity's Last Exam (HLE)](https://scale.com/leaderboard/humanitys_last_exam)** — Expert-level academic testing (Gemini 3: 45.8%, o3: 26-30%).
 - **[GAIA](https://huggingface.co/gaia-benchmark)** — Multi-step real-world task execution (Smolagents: 55.15%).
 - **[ScholarQA](https://github.com/allenai/scholarqa)** — Academic literature synthesis (DR-Tulu beats GPT-4).
 - **[ARC-AGI](https://arcprize.org)** — Abstract reasoning (o3: 87.5%).
+
+## What Makes an Agent Deep Research
+
+A deep research agent plans an investigation, retrieves and reads multiple
+sources, cross-checks claims, synthesizes a report, and preserves enough
+citations or traces for audit. A fuller architecture and build-vs-buy guide is
+available in `docs/deep-research-agent.md`.
+
+## Domain-Specific Deep Research
+
+Deep research tools should also be categorized by domain index: general web,
+finance, medicine/life sciences, AI for science, legal/regulatory,
+enterprise/internal data, and social/news sentiment. Domain-specific tools can
+retrieve better sources but require tighter citation and compliance checks.
+
+See `docs/domain-specific-deep-research.md`. It includes You.com Finance
+Research, which uses a finance-optimized index for earnings analysis, due
+diligence, competitive benchmarking, macroeconomic research, and regulatory or
+filing analysis.
+
+## Codex Plugin and Skills
+
+This repo is also structured as a Codex Plugin via
+`.codex-plugin/plugin.json`. The Codex-facing skills live in `.agents/skills/`:
+
+- `deep-research-api-calls` documents API-key environment names, provider call
+  patterns, cost controls, and under-$1 benchmark prompt guidance.
+- provider-specific skills document OpenAI, Gemini, Perplexity, xAI, You.com,
+  Exa, Tavily, Jina, GPT Researcher, LangChain Open Deep Research, STORM, and
+  Smolagents call patterns.
+- `okf-normalize-research` converts raw deep research reports into a small
+  Open Knowledge Format-style markdown bundle.
+
+Normalization guidance is in `docs/okf-normalization.md`. Canonical low-cost
+benchmark tasks are in `docs/benchmark-tasks.md`. Provider source links are in
+`.agents/skills/provider-source-index.md`.
+
+1Password setup guidance is in `docs/onepassword-env.md`, with signup URLs and
+required API-key field names in `docs/api-key-signup-checklist.md`.
+Custom-source research guidance for Google Docs, YouTube, local files, S3,
+arXiv, and related corpora is in `docs/custom-data-sources.md`.
+Domain-specific tool categorization is in `docs/domain-specific-deep-research.md`.
+Live provider smoke-test guidance is in `docs/live-benchmark-runbook.md`.
+
+Run the offline repository audit before spending API credits:
+
+```bash
+python -m awesome_deep_research.audit
+python -m awesome_deep_research.op_env --template
+python -m awesome_deep_research.source_refresh
+```
 
 ## Claude Code Skills
 

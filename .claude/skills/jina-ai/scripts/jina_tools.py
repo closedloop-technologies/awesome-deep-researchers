@@ -2,21 +2,20 @@ import argparse
 import json
 import os
 import sys
+from urllib.parse import quote
 import requests
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-JINA_API_KEY = os.getenv("JINA_API_KEY")
-
 def get_headers(use_json=True):
     headers = {}
-    if JINA_API_KEY:
-        headers["Authorization"] = f"Bearer {JINA_API_KEY}"
+    api_key = os.getenv("JINA_API_KEY")
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     if use_json:
-        # Request structured JSON output
-        headers["X-Return-Format"] = "json"
+        headers["Accept"] = "application/json"
     return headers
 
 def read_url(url):
@@ -35,18 +34,16 @@ def read_url(url):
             "content_markdown": data.get("content", "")
         }
 
-    except requests.exceptions.RequestException as e:
+    except (requests.exceptions.RequestException, ValueError) as e:
         print(f"Error during Jina Reader request: {e}", file=sys.stderr)
         sys.exit(1)
 
 def search_web(query):
-    # Jina Search API endpoint
-    target_url = "https://s.jina.ai/search"
-    params = {"q": query}
+    target_url = f"https://s.jina.ai/{quote(query)}"
     headers = get_headers(use_json=True)
 
     try:
-        response = requests.get(target_url, headers=headers, params=params)
+        response = requests.get(target_url, headers=headers)
         response.raise_for_status()
 
         results = []
@@ -61,7 +58,7 @@ def search_web(query):
 
         return results
 
-    except requests.exceptions.RequestException as e:
+    except (requests.exceptions.RequestException, ValueError) as e:
         print(f"Error during Jina Search request: {e}", file=sys.stderr)
         sys.exit(1)
 

@@ -78,9 +78,13 @@ Issues = "https://github.com/closedloop-technologies/awesome-deep-researchers/is
 
 [project.scripts]
 adr = "awesome_deep_research.cli:main"
+adr-audit = "awesome_deep_research.audit:main"
+adr-op-check = "awesome_deep_research.op_env:main"
+adr-live-smoke = "benchmark.live_smoke:main"
+adr-source-check = "awesome_deep_research.source_refresh:main"
 
 [tool.setuptools]
-packages = ["awesome_deep_research"]
+packages = ["awesome_deep_research", "benchmark"]
 
 [tool.setuptools.package-data]
 awesome_deep_research = ["py.typed"]
@@ -129,7 +133,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
-    "--strict-config"
+    "--strict-config",
+    "--import-mode=importlib"
 ]
 
 # ADD/UPDATE THESE CONFIGURATIONS:
@@ -137,8 +142,6 @@ testpaths = [
     "tests",           # For your main project tests (e.g., test_cli.py)
     ".claude/skills"   # For the skill tests
 ]
-# Ensure async tests run correctly (requires pytest-asyncio)
-asyncio_mode = "auto"
 # Define the integration marker used in your tests
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",

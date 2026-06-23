@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Validate a custom-source deep research manifest."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any, Dict, Iterable, List
+
+
+SUPPORTED_SOURCE_TYPES = {
+    "google_drive",
+    "youtube",
+    "local_file",
+    "s3",
+    "arxiv",
+    "database",
+    "csv",
+    "slack",
+    "email",
+    "ticket",
+}
+
+COMMON_REQUIRED = {"source_id", "source_type", "title", "citation_anchor"}
+TYPE_REQUIRED = {
+    "google_drive": {"file_id", "web_url", "modified_time"},
+    "youtube": {"video_id", "url", "published_at"},
+    "local_file": {"path", "sha256", "modified_time"},
+    "s3": {"bucket", "key", "etag"},
+    "arxiv": {"arxiv_id", "version", "pdf_url"},
+    "database": {"database", "query_id", "query"},
+    "csv": {"path", "sha256", "schema"},
+    "slack": {"workspace", "channel", "message_id", "timestamp"},
+    "email": {"mailbox", "message_id", "timestamp"},
+    "ticket": {"system", "ticket_id", "url"},
+}
+
+
+def load_manifest(path: Path) -> Dict[str, Any]:
+    with path.open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def validate_source(source: Dict[str, Any], index: int) -> List[str]:
+    errors: List[str] = []
+    label = source.get("source_id") or f"sources[{index}]"
+    source_type = source.get("source_type")
+
+    missing_common = sorted(name for name in COMMON_REQUIRED if not source.get(name))
+    for name in missing_common:
+        errors.append(f"{label}: missing required field {name}")
+
+    if source_type not in SUPPORTED_SOURCE_TYPES:
+        errors.append(f"{label}: unsupported source_type {source_type!r}")
+        return errors
+
+    missing_type = sorted(name for name in TYPE_REQUIRED[source_type] if not source.get(name))
+    for name in missing_type:
+        errors.append(f"{label}: missing {source_type} field {name}")
+
+    anchors = source.get("anchors", [])
+    if anchors is not None and not isinstance(anchors, list):
+        errors.append(f"{label}: anchors must be a list when provided")
+
+    return errors
+
+
+def validate_manifest(manifest: Dict[str, Any]) -> List[str]:
+    errors: List[str] = []
+    if not manifest.get("corpus_id"):
+        errors.append("manifest: missing corpus_id")
+    if not manifest.get("research_question"):
+        errors.append("manifest: missing research_question")
+    if not manifest.get("allowed_sources"):
+        errors.append("manifest: missing allowed_sources")
+
+    sources = manifest.get("sources")
+    if not isinstance(sources, list) or not sources:
+        errors.append("manifest: sources must be a non-empty list")
+        return errors
+
+    seen = set()
+    for index, source in enumerate(sources):
+        if not isinstance(source, dict):
+            errors.append(f"sources[{index}]: source must be an object")
+            continue
+        source_id = source.get("source_id")
+        if source_id in seen:
+            errors.append(f"{source_id}: duplicate source_id")
+        if source_id:
+            seen.add(source_id)
+        errors.extend(validate_source(source, index))
+
+    return errors
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("manifest", type=Path, help="Path to custom-source manifest JSON.")
+    return parser
+
+
+def main() -> None:
+    args = build_parser().parse_args()
+    try:
+        manifest = load_manifest(args.manifest)
+    except json.JSONDecodeError as exc:
+        print(f"{args.manifest}: invalid JSON: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+
+    errors = validate_manifest(manifest)
+    if errors:
+        for error in errors:
+            print(error, file=sys.stderr)
+        raise SystemExit(1)
+
+    print(f"Custom source manifest valid: {args.manifest}")
+
+
+if __name__ == "__main__":
+    main()

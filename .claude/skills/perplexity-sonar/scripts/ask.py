@@ -13,7 +13,7 @@ except ImportError:
 # Load environment variables
 load_dotenv()
 
-def ask_perplexity(prompt, model="sonar-medium-online"):
+def ask_perplexity(prompt, model="sonar", search_context_size="low"):
     """Sends a prompt to the Perplexity Sonar API."""
     api_key = os.environ.get("PERPLEXITY_API_KEY")
     if not api_key:
@@ -40,11 +40,21 @@ def ask_perplexity(prompt, model="sonar-medium-online"):
         response = client.chat.completions.create(
             model=model,
             messages=messages,
+            extra_body={"search_context_size": search_context_size},
         )
 
         # Extract and output the synthesized answer
         answer = response.choices[0].message.content
         print(answer)
+        usage = getattr(response, "usage", None)
+        cost = getattr(usage, "cost", None) if usage is not None else None
+        total_cost = None
+        if isinstance(cost, dict):
+            total_cost = cost.get("total_cost")
+        elif cost is not None:
+            total_cost = getattr(cost, "total_cost", None)
+        if total_cost is not None:
+            print(f"actual_cost = {total_cost}", file=sys.stderr)
 
     except Exception as e:
         print(f"Error during Perplexity API call: {e}", file=sys.stderr)
@@ -53,9 +63,12 @@ def ask_perplexity(prompt, model="sonar-medium-online"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Perplexity Sonar Tool for Claude Skills")
     parser.add_argument("--prompt", required=True, help="The research question or prompt.")
-    parser.add_argument("--model", default="sonar-medium-online",
-                        choices=["sonar-small-online", "sonar-medium-online", "sonar-large-online"],
+    parser.add_argument("--model", default="sonar",
+                        choices=["sonar", "sonar-pro"],
                         help="The Perplexity Sonar model to use.")
+    parser.add_argument("--search-context-size", default="low",
+                        choices=["low", "medium", "high"],
+                        help="Search context size. Use low for under-$1 benchmark smoke.")
 
     args = parser.parse_args()
-    ask_perplexity(args.prompt, args.model)
+    ask_perplexity(args.prompt, args.model, args.search_context_size)

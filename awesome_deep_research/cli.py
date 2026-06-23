@@ -22,19 +22,52 @@ class PromptExample:
     text: str
 
 
+@dataclass
+class SkillInfo:
+    name: str
+    path: Path
+    source: str
+    runnable: bool
+
+
+SKILL_ROOTS = [
+    ("agents", REPO_ROOT / ".agents" / "skills"),
+    ("claude", REPO_ROOT / ".claude" / "skills"),
+]
+SKILLS_ROOT = REPO_ROOT / ".claude" / "skills"
+
+
 def slugify(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     return slug or "prompt"
 
 
+def load_skill_infos(include_documentation: bool = True) -> Dict[str, SkillInfo]:
+    skills: Dict[str, SkillInfo] = {}
+    for source, root in SKILL_ROOTS:
+        if not root.exists():
+            continue
+        for path in sorted(root.iterdir()):
+            if not path.is_dir():
+                continue
+            scripts_dir = path / "scripts"
+            runnable = scripts_dir.exists() and any(scripts_dir.glob("*.py"))
+            if not include_documentation and not runnable:
+                continue
+            existing = skills.get(path.name)
+            if existing and existing.runnable:
+                continue
+            skills[path.name] = SkillInfo(
+                name=path.name,
+                path=path,
+                source=source,
+                runnable=runnable,
+            )
+    return skills
+
+
 def load_skills() -> Dict[str, Path]:
-    if not SKILLS_ROOT.exists():
-        return {}
-    return {
-        path.name: path
-        for path in sorted(SKILLS_ROOT.iterdir())
-        if path.is_dir()
-    }
+    return {name: info.path for name, info in load_skill_infos(include_documentation=False).items()}
 
 
 def parse_skill_description(skill_dir: Path) -> str:
@@ -61,17 +94,18 @@ def parse_skill_description(skill_dir: Path) -> str:
 
 
 def list_skills_command(_: argparse.Namespace) -> int:
-    skills = load_skills()
+    skills = load_skill_infos(include_documentation=True)
     if not skills:
-        print("No Claude Code skills found under .claude/skills/", file=sys.stderr)
+        print("No skills found under .agents/skills/ or .claude/skills/", file=sys.stderr)
         return 1
 
-    for name, path in skills.items():
-        description = parse_skill_description(path)
+    for name, skill in sorted(skills.items()):
+        description = parse_skill_description(skill.path)
+        runnable = "runnable" if skill.runnable else "docs"
         if description:
-            print(f"{name}\t{description}")
+            print(f"{name}\t{skill.source}\t{runnable}\t{description}")
         else:
-            print(f"{name}")
+            print(f"{name}\t{skill.source}\t{runnable}")
     return 0
 
 
@@ -252,13 +286,13 @@ def next_output_path(output_dir: Path, skill_name: str) -> Path:
 
 
 def run_command(args: argparse.Namespace) -> int:
-    skills = load_skills()
+    skills = load_skill_infos(include_documentation=False)
     if args.skill not in skills:
         available = ", ".join(skills.keys()) or "<none>"
-        print(f"Skill '{args.skill}' not found. Available skills: {available}", file=sys.stderr)
+        print(f"Runnable skill '{args.skill}' not found. Available runnable skills: {available}", file=sys.stderr)
         return 1
 
-    skill_dir = skills[args.skill]
+    skill_dir = skills[args.skill].path
 
     try:
         prompt = resolve_prompt_text(args.prompt_id, args.prompt_text)
@@ -314,7 +348,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    list_skills = subparsers.add_parser("list-skills", help="List available Claude Code skills.")
+    list_skills = subparsers.add_parser("list-skills", help="List available .agents and Claude Code skills.")
     list_skills.set_defaults(func=list_skills_command)
 
     list_prompts = subparsers.add_parser(
@@ -325,7 +359,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser(
         "run", help="Execute a headless Claude research run with a selected skill and prompt."
     )
-    run_parser.add_argument("--skill", required=True, help="Skill name under .claude/skills to activate.")
+    run_parser.add_argument("--skill", required=True, help="Runnable skill name to activate.")
     prompt_group = run_parser.add_mutually_exclusive_group(required=True)
     prompt_group.add_argument("--prompt-id", help="Identifier from 'adr list-prompts'.")
     prompt_group.add_argument("--prompt-text", help="Freeform research prompt text.")

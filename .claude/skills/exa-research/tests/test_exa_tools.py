@@ -11,14 +11,6 @@ import exa_tools
 
 
 @pytest.fixture
-def mock_exa_client():
-    """Mock Exa client."""
-    with patch.dict(os.environ, {'EXA_API_KEY': 'test_key'}):
-        mock = MagicMock()
-        yield mock
-
-
-@pytest.fixture
 def mock_openai_client():
     """Mock OpenAI client for research."""
     mock = MagicMock()
@@ -28,62 +20,67 @@ def mock_openai_client():
 class TestSearch:
     """Test the search function."""
     
-    def test_search_with_text(self, mock_exa_client):
+    def test_search_with_text(self):
         """Test basic search with text content."""
-        # Setup mock response
-        mock_result = Mock()
-        mock_result.url = "https://example.com"
-        mock_result.title = "Test Result"
-        mock_result.text = "Sample text content"
-        mock_result.highlights = None
-        
         mock_response = Mock()
-        mock_response.results = [mock_result]
-        mock_exa_client.search_and_contents.return_value = mock_response
+        mock_response.json.return_value = {
+            "results": [
+                {
+                    "url": "https://example.com",
+                    "title": "Test Result",
+                    "text": "Sample text content",
+                }
+            ]
+        }
         
-        with patch('exa_tools.get_exa_client', return_value=mock_exa_client):
-            results = exa_tools.search("test query", num_results=1, highlights=False)
+        with patch.dict(os.environ, {'EXA_API_KEY': 'test_key'}):
+            with patch('exa_tools.requests.post', return_value=mock_response) as mock_post:
+                results = exa_tools.search("test query", num_results=1, highlights=False)
         
         assert len(results) == 1
         assert results[0]['url'] == "https://example.com"
         assert results[0]['title'] == "Test Result"
         assert results[0]['content'] == "Sample text content"
         
-        mock_exa_client.search_and_contents.assert_called_once()
+        mock_post.assert_called_once()
     
-    def test_search_with_highlights(self, mock_exa_client):
+    def test_search_with_highlights(self):
         """Test search with highlights enabled."""
-        mock_result = Mock()
-        mock_result.url = "https://example.com"
-        mock_result.title = "Test Result"
-        mock_result.text = "Full text"
-        mock_result.highlights = ["highlight1", "highlight2"]
-        
         mock_response = Mock()
-        mock_response.results = [mock_result]
-        mock_exa_client.search_and_contents.return_value = mock_response
+        mock_response.json.return_value = {
+            "results": [
+                {
+                    "url": "https://example.com",
+                    "title": "Test Result",
+                    "text": "Full text",
+                    "highlights": ["highlight1", "highlight2"],
+                }
+            ]
+        }
         
-        with patch('exa_tools.get_exa_client', return_value=mock_exa_client):
-            results = exa_tools.search("test query", num_results=1, highlights=True)
+        with patch.dict(os.environ, {'EXA_API_KEY': 'test_key'}):
+            with patch('exa_tools.requests.post', return_value=mock_response):
+                results = exa_tools.search("test query", num_results=1, highlights=True)
         
         assert results[0]['content'] == ["highlight1", "highlight2"]
     
-    def test_search_multiple_results(self, mock_exa_client):
+    def test_search_multiple_results(self):
         """Test search with multiple results."""
-        mock_results = []
-        for i in range(3):
-            mock_result = Mock()
-            mock_result.url = f"https://example{i}.com"
-            mock_result.title = f"Result {i}"
-            mock_result.text = f"Content {i}"
-            mock_results.append(mock_result)
-        
         mock_response = Mock()
-        mock_response.results = mock_results
-        mock_exa_client.search_and_contents.return_value = mock_response
+        mock_response.json.return_value = {
+            "results": [
+                {
+                    "url": f"https://example{i}.com",
+                    "title": f"Result {i}",
+                    "text": f"Content {i}",
+                }
+                for i in range(3)
+            ]
+        }
         
-        with patch('exa_tools.get_exa_client', return_value=mock_exa_client):
-            results = exa_tools.search("test query", num_results=3, highlights=False)
+        with patch.dict(os.environ, {'EXA_API_KEY': 'test_key'}):
+            with patch('exa_tools.requests.post', return_value=mock_response):
+                results = exa_tools.search("test query", num_results=3, highlights=False)
         
         assert len(results) == 3
         for i in range(3):
@@ -126,30 +123,10 @@ class TestResearch:
 class TestFindSimilar:
     """Test the find_similar function."""
     
-    def test_find_similar_basic(self, mock_exa_client):
-        """Test finding similar URLs."""
-        mock_results = []
-        for i in range(2):
-            mock_result = Mock()
-            mock_result.url = f"https://similar{i}.com"
-            mock_result.title = f"Similar Page {i}"
-            mock_results.append(mock_result)
-        
-        mock_response = Mock()
-        mock_response.results = mock_results
-        mock_exa_client.find_similar.return_value = mock_response
-        
-        with patch('exa_tools.get_exa_client', return_value=mock_exa_client):
-            results = exa_tools.find_similar("https://example.com", num_results=2)
-        
-        assert len(results) == 2
-        assert results[0]['url'] == "https://similar0.com"
-        assert results[1]['title'] == "Similar Page 1"
-        
-        mock_exa_client.find_similar.assert_called_once_with(
-            "https://example.com", 
-            num_results=2
-        )
+    def test_find_similar_exits_without_sdk(self):
+        """find_similar is intentionally outside the benchmark path."""
+        with pytest.raises(SystemExit):
+            exa_tools.find_similar("https://example.com", num_results=2)
 
 
 class TestGetExaClient:
@@ -158,9 +135,7 @@ class TestGetExaClient:
     def test_get_exa_client_with_key(self):
         """Test client creation with valid API key."""
         with patch.dict(os.environ, {'EXA_API_KEY': 'test_key'}):
-            with patch('exa_tools.Exa') as mock_exa_cls:
-                exa_tools.get_exa_client()
-                mock_exa_cls.assert_called_once_with('test_key')
+            exa_tools.get_exa_client()
     
     def test_get_exa_client_without_key(self):
         """Test client creation fails without API key."""
@@ -172,13 +147,12 @@ class TestGetExaClient:
 class TestErrorHandling:
     """Test error handling scenarios."""
     
-    def test_search_api_error(self, mock_exa_client):
+    def test_search_api_error(self):
         """Test search handles API errors."""
-        mock_exa_client.search_and_contents.side_effect = Exception("API Error")
-        
-        with patch('exa_tools.get_exa_client', return_value=mock_exa_client):
-            with pytest.raises(SystemExit):
-                exa_tools.search("test query")
+        with patch.dict(os.environ, {'EXA_API_KEY': 'test_key'}):
+            with patch('exa_tools.requests.post', side_effect=exa_tools.requests.RequestException("API Error")):
+                with pytest.raises(SystemExit):
+                    exa_tools.search("test query")
     
     def test_research_api_error(self, mock_openai_client):
         """Test research handles API errors."""

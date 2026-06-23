@@ -26,7 +26,7 @@ class TestGetHeaders:
             headers = jina_tools.get_headers(use_json=True)
         
         assert headers['Authorization'] == 'Bearer test_key'
-        assert headers['X-Return-Format'] == 'json'
+        assert headers['Accept'] == 'application/json'
     
     def test_headers_without_api_key(self):
         """Test headers without API key."""
@@ -34,12 +34,12 @@ class TestGetHeaders:
             headers = jina_tools.get_headers(use_json=True)
         
         assert 'Authorization' not in headers
-        assert headers['X-Return-Format'] == 'json'
+        assert headers['Accept'] == 'application/json'
     
     def test_headers_without_json(self):
         """Test headers without JSON format."""
         headers = jina_tools.get_headers(use_json=False)
-        assert 'X-Return-Format' not in headers
+        assert 'Accept' not in headers
 
 
 class TestReadUrl:
@@ -85,7 +85,8 @@ class TestReadUrl:
     
     def test_read_url_request_error(self, mock_requests_get):
         """Test URL reading with request error."""
-        mock_requests_get.side_effect = Exception("Network error")
+        import requests
+        mock_requests_get.side_effect = requests.exceptions.RequestException("Network error")
         
         with pytest.raises(SystemExit):
             jina_tools.read_url('https://example.com')
@@ -170,7 +171,8 @@ class TestSearchWeb:
     
     def test_search_web_request_error(self, mock_requests_get):
         """Test search with request error."""
-        mock_requests_get.side_effect = Exception("API error")
+        import requests
+        mock_requests_get.side_effect = requests.exceptions.RequestException("API error")
         
         with pytest.raises(SystemExit):
             jina_tools.search_web('test query')
@@ -184,9 +186,9 @@ class TestSearchWeb:
         
         jina_tools.search_web('my search query')
         
-        # Verify query parameter was passed
-        call_kwargs = mock_requests_get.call_args[1]
-        assert call_kwargs['params'] == {'q': 'my search query'}
+        call_args = mock_requests_get.call_args
+        assert 'https://s.jina.ai/my%20search%20query' in str(call_args)
+        assert 'params' not in mock_requests_get.call_args[1]
 
 
 class TestErrorHandling:

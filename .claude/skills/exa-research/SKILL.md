@@ -48,13 +48,14 @@ python3 scripts/exa_tools.py search "innovative sustainable urban planning" --nu
 Automate in-depth research and receive a structured report.
 
 ```bash
+python3 scripts/exa_tools.py search "<query>" --num-results 5 --highlights
 python3 scripts/exa_tools.py research "<query>" [--model <exa-research|exa-research-pro>]
 ```
 
 **Example:**
 
 ```bash
-python3 scripts/exa_tools.py research "Analyze the impact of quantum computing on cryptography" --model exa-research-pro
+python3 scripts/exa_tools.py search "Analyze the impact of quantum computing on cryptography" --num-results 5 --highlights
 ```
 
 ### 3. Find Similar

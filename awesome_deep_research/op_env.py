@@ -1,0 +1,191 @@
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, List, Optional, Sequence
+
+from .audit import REQUIRED_ENV_NAMES, REPO_ROOT
+
+
+DEFAULT_ENV_FILE = REPO_ROOT / ".env.adr"
+DEFAULT_TEMPLATE_FILE = REPO_ROOT / ".env.adr.example"
+DEFAULT_OP_VAULT = "awesome-deep-researchers"
+DEFAULT_OP_ITEM = "api-keys"
+OP_REF_RE = re.compile(r"^op://[^/]+/[^/]+/[^/]+$")
+
+
+@dataclass
+class EnvCheckResult:
+    name: str
+    ok: bool
+    detail: str
+
+
+def parse_env_file(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckResult]:
+    if not path.exists():
+        return [EnvCheckResult("env file", False, f"{path} does not exist")]
+
+    values = parse_env_file(path)
+    results = []
+    for name in sorted(required_names):
+        value = values.get(name, "")
+        if not value:
+            results.append(EnvCheckResult(name, False, "missing"))
+        elif not OP_REF_RE.match(value):
+            results.append(EnvCheckResult(name, False, "not an op:// reference"))
+        else:
+            results.append(EnvCheckResult(name, True, "op reference present"))
+    return results
+
+
+def check_live_environment(required_names: Iterable[str]) -> List[EnvCheckResult]:
+    results = []
+    for name in sorted(required_names):
+        value = os.getenv(name)
+        if value:
+            results.append(EnvCheckResult(name, True, f"set ({len(value)} chars)"))
+        else:
+            results.append(EnvCheckResult(name, False, "not set"))
+    return results
+
+
+def check_op_item_scaffold(
+    required_names: Iterable[str],
+    *,
+    vault: str = DEFAULT_OP_VAULT,
+    item: str = DEFAULT_OP_ITEM,
+) -> List[EnvCheckResult]:
+    command = ["op", "item", "get", item, "--vault", vault, "--format", "json"]
+    try:
+        completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        return [EnvCheckResult("op item", False, f"unable to run op: {exc}")]
+
+    if completed.returncode != 0:
+        detail = completed.stderr.strip().splitlines()[-1] if completed.stderr.strip() else "op item get failed"
+        return [EnvCheckResult("op item", False, detail)]
+
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        return [EnvCheckResult("op item", False, f"invalid JSON from op: {exc}")]
+
+    fields = payload.get("fields", [])
+    labels = {field.get("label") for field in fields if isinstance(field, dict)}
+    results = [
+        EnvCheckResult("op vault", payload.get("vault", {}).get("name") == vault, vault),
+        EnvCheckResult("op item", payload.get("title") == item, item),
+    ]
+    for name in sorted(required_names):
+        results.append(
+            EnvCheckResult(
+                name,
+                name in labels,
+                "field present" if name in labels else "missing field",
+            )
+        )
+    return results
+
+
+def names_for_scope(scope: Optional[str]) -> Sequence[str]:
+    if not scope:
+        return sorted(REQUIRED_ENV_NAMES)
+
+    groups = {
+        "core": ["OPENAI_API_KEY", "PERPLEXITY_API_KEY", "EXA_API_KEY", "TAVILY_API_KEY"],
+        "commercial": [
+            "OPENAI_API_KEY",
+            "PERPLEXITY_API_KEY",
+            "EXA_API_KEY",
+            "TAVILY_API_KEY",
+            "JINA_API_KEY",
+            "XAI_API_KEY",
+            "YOU_API_KEY",
+            "GOOGLE_API_KEY",
+            "GOOGLE_CLOUD_PROJECT",
+        ],
+        "oss": ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "TAVILY_API_KEY", "HF_TOKEN", "BING_SEARCH_API_KEY", "YDC_API_KEY"],
+    }
+    if scope not in groups:
+        raise ValueError(f"Unknown scope '{scope}'. Expected one of: {', '.join(sorted(groups))}")
+    return groups[scope]
+
+
+def format_results(results: Iterable[EnvCheckResult]) -> str:
+    lines = []
+    for result in results:
+        status = "PASS" if result.ok else "FAIL"
+        lines.append(f"{status}\t{result.name}\t{result.detail}")
+    return "\n".join(lines)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Check 1Password-backed benchmark environment references.")
+    parser.add_argument(
+        "--env-file",
+        type=Path,
+        default=DEFAULT_ENV_FILE,
+        help="Dotenv file with op:// references. Defaults to .env.adr.",
+    )
+    parser.add_argument(
+        "--template",
+        action="store_true",
+        help="Check .env.adr.example instead of .env.adr.",
+    )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Check currently resolved environment variables. Run through op run.",
+    )
+    parser.add_argument(
+        "--op-scaffold",
+        action="store_true",
+        help="Check that the configured 1Password vault/item has the required field labels.",
+    )
+    parser.add_argument("--vault", default=DEFAULT_OP_VAULT, help="1Password vault name.")
+    parser.add_argument("--item", default=DEFAULT_OP_ITEM, help="1Password item title.")
+    parser.add_argument(
+        "--scope",
+        choices=["core", "commercial", "oss"],
+        help="Limit checks to a provider group.",
+    )
+    return parser
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    args = build_parser().parse_args(argv)
+    required_names = names_for_scope(args.scope)
+
+    if args.live:
+        results = check_live_environment(required_names)
+    elif args.op_scaffold:
+        results = check_op_item_scaffold(required_names, vault=args.vault, item=args.item)
+    else:
+        env_file = DEFAULT_TEMPLATE_FILE if args.template else args.env_file
+        results = check_env_file(env_file, required_names)
+
+    print(format_results(results))
+    return 0 if all(result.ok for result in results) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -35,18 +35,19 @@ Use the `scripts/ask.py` script to query the Sonar API.
 ### Command
 
 ```bash
-python3 scripts/ask.py --prompt "<your_research_question>" [--model <model_name>]
+python3 scripts/ask.py --prompt "<your_research_question>" [--model <model_name>] [--search-context-size low]
 ````
 
 ### Parameters
 
 * `--prompt` (Required): The research question.
-* `--model` (Optional): Defaults to `sonar-medium-online`. Use `sonar-large-online` for comprehensive analysis.
+* `--model` (Optional): Defaults to `sonar`. Use `sonar-pro` for deeper analysis.
+* `--search-context-size` (Optional): Defaults to `low` for under-`$1` benchmark smoke runs.
 
 ### Example
 
 ```bash
-python3 scripts/ask.py --prompt "What are the latest developments in the EV market in Q4 2025?" --model sonar-large-online
+python3 scripts/ask.py --prompt "What are the latest developments in the EV market in Q4 2025?" --model sonar-pro --search-context-size low
 ```
 
 ## Output

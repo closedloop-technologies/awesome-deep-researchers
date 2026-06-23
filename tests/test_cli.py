@@ -1,7 +1,10 @@
 import re
+import sys
 from pathlib import Path
 
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from awesome_deep_research import cli
 from awesome_deep_research.cli import PromptExample
@@ -14,6 +17,7 @@ def test_load_prompt_examples_contains_expected_ids():
     prompt_ids = {prompt.identifier for prompt in prompts}
     assert "domain-mapping-01" in prompt_ids
     assert "source-retrieval-01" in prompt_ids
+    assert "repository-refresh-meta-research-01" in prompt_ids
 
 
 def test_next_output_path_increments(tmp_path: Path):
@@ -23,6 +27,30 @@ def test_next_output_path_increments(tmp_path: Path):
 
     second = cli.next_output_path(tmp_path, "perplexity-sonar")
     assert second.name == "OUTPUT-PERPLEXITY-SONAR-0002.md"
+
+
+def test_load_skill_infos_includes_agents_documentation_skills():
+    skills = cli.load_skill_infos(include_documentation=True)
+
+    assert "gemini-deep-research" in skills
+    assert skills["gemini-deep-research"].source == "agents"
+    assert skills["gemini-deep-research"].runnable is True
+
+
+def test_load_skills_only_returns_runnable_skills():
+    skills = cli.load_skills()
+
+    assert "okf-normalize-research" in skills
+    assert "gemini-deep-research" in skills
+
+
+def test_list_skills_command_shows_source_and_runnable_state(capsys):
+    result = cli.list_skills_command(None)
+    output = capsys.readouterr().out
+
+    assert result == 0
+    assert "gemini-deep-research\tagents\trunnable" in output
+    assert "okf-normalize-research\tagents\trunnable" in output
 
 
 def test_build_user_prompt_includes_extra_instructions():
