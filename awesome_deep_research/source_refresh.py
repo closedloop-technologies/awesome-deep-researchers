@@ -284,6 +284,13 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             False,
             f"{entry.skill}: {entry.source} local source must use forward slashes",
         )
+    if Path(local_source_path).is_absolute():
+        return CheckResult(False, f"{entry.skill}: {entry.source} must be repo-relative")
+    if ".." in Path(local_source_path).parts:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain parent directory references",
+        )
     local_path = (repo_root / local_source_path).resolve()
     try:
         local_path.relative_to(repo_root.resolve())

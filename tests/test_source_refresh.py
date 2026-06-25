@@ -711,7 +711,7 @@ def test_local_source_link_rejects_path_outside_repo(tmp_path):
     )
 
     assert result.ok is False
-    assert "escapes repo root" in result.message
+    assert "must not contain parent directory references" in result.message
 
 
 def test_local_source_link_rejects_absolute_path_outside_repo(tmp_path):
@@ -724,7 +724,32 @@ def test_local_source_link_rejects_absolute_path_outside_repo(tmp_path):
     )
 
     assert result.ok is False
-    assert "escapes repo root" in result.message
+    assert "must be repo-relative" in result.message
+
+
+def test_local_source_link_rejects_absolute_path_inside_repo(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    source = docs_dir / "source.md"
+    source.write_text("source", encoding="utf-8")
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", str(source.resolve())),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must be repo-relative" in result.message
+
+
+def test_local_source_link_rejects_encoded_parent_directory_sources(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "%2e%2e/outside.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not contain parent directory references" in result.message
 
 
 def test_source_link_rejects_unsupported_url_schemes(tmp_path):
