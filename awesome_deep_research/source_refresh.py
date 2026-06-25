@@ -242,6 +242,15 @@ def check_source_index(
 def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float = 10.0) -> CheckResult:
     parsed = urlparse(entry.source)
     if parsed.scheme in {"http", "https"}:
+        if parsed.scheme == "http":
+            return CheckResult(False, f"{entry.skill}: {entry.source} must use HTTPS")
+        if not parsed.netloc:
+            return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
+        if parsed.username is not None or parsed.password is not None:
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} must not include credentials",
+            )
         try:
             response = requests.get(
                 entry.source,

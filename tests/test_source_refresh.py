@@ -737,6 +737,36 @@ def test_source_link_rejects_unsupported_url_schemes(tmp_path):
     assert "unsupported URL scheme" in result.message
 
 
+def test_source_link_rejects_plain_http_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "http://example.com/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must use HTTPS" in result.message
+
+
+def test_source_link_rejects_credentialed_urls_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://user:token@example.com/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not include credentials" in result.message
+
+
 def test_local_source_link_rejects_directory_sources(tmp_path):
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()
