@@ -276,6 +276,8 @@ def ensure_output_dir(path: Optional[str]) -> Path:
         output_dir.relative_to(REPO_ROOT.resolve())
     except ValueError as exc:
         raise ValueError("--output-dir must stay within the repository root.") from exc
+    if output_dir.exists() and not output_dir.is_dir():
+        raise ValueError("--output-dir must be a directory.")
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
 

@@ -142,3 +142,15 @@ def test_ensure_output_dir_rejects_absolute_paths_outside_repo(
         cli.ensure_output_dir(str(outside))
 
     assert not outside.exists()
+
+
+def test_ensure_output_dir_rejects_existing_files(tmp_path: Path, monkeypatch):
+    output_file = tmp_path / "outputs"
+    output_file.write_text("not a directory", encoding="utf-8")
+    monkeypatch.setattr(cli, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(cli, "DEFAULT_OUTPUT_DIR", tmp_path / "default")
+
+    with pytest.raises(ValueError, match="--output-dir must be a directory"):
+        cli.ensure_output_dir(str(output_file))
+
+    assert output_file.read_text(encoding="utf-8") == "not a directory"
