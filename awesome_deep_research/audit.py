@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -130,6 +131,32 @@ def check_mirrored_skill_directories() -> AuditResult:
     )
 
 
+def check_mirrored_skill_tests() -> AuditResult:
+    agents_tests = {
+        path.relative_to(REPO_ROOT / ".agents" / "skills")
+        for path in (REPO_ROOT / ".agents" / "skills").glob("*/tests/test_*.py")
+    }
+    packaged_tests = {
+        path.relative_to(REPO_ROOT / "skills")
+        for path in (REPO_ROOT / "skills").glob("*/tests/test_*.py")
+    }
+    failures = []
+    for relative in sorted(agents_tests - packaged_tests):
+        failures.append(f"missing from skills: {relative}")
+    for relative in sorted(packaged_tests - agents_tests):
+        failures.append(f"missing from .agents/skills: {relative}")
+    for relative in sorted(agents_tests & packaged_tests):
+        agents_text = read_text(REPO_ROOT / ".agents" / "skills" / relative)
+        packaged_text = read_text(REPO_ROOT / "skills" / relative)
+        if agents_text != packaged_text:
+            failures.append(f"test mirror differs: {relative}")
+    return AuditResult(
+        "mirrored skill tests",
+        not failures,
+        "; ".join(failures) if failures else "skill tests match",
+    )
+
+
 def check_skill_frontmatter() -> AuditResult:
     failures = []
     for root in [".agents/skills", "skills"]:
@@ -178,6 +205,26 @@ def check_agents_runnable_skills() -> AuditResult:
                 missing.append(str(script.relative_to(REPO_ROOT)))
     ok = not missing
     return AuditResult("agents runnable skill scripts", ok, "missing: " + ", ".join(missing) if missing else "all present")
+
+
+def check_no_compiled_skill_artifacts() -> AuditResult:
+    tracked_files = subprocess.run(
+        ["git", "ls-files", ".agents/skills", "skills"],
+        cwd=REPO_ROOT,
+        text=True,
+        check=True,
+        capture_output=True,
+    )
+    compiled = sorted(
+        path
+        for path in tracked_files.stdout.splitlines()
+        if "/__pycache__/" in path or path.endswith((".pyc", ".pyo"))
+    )
+    return AuditResult(
+        "compiled skill artifacts",
+        not compiled,
+        "found: " + ", ".join(compiled) if compiled else "none present",
+    )
 
 
 def check_env_template() -> AuditResult:
@@ -405,9 +452,11 @@ def run_audit() -> List[AuditResult]:
         check_plugin_manifest(),
         check_provider_skills(),
         check_mirrored_skill_directories(),
+        check_mirrored_skill_tests(),
         check_skill_frontmatter(),
         check_provider_skill_commands(),
         check_agents_runnable_skills(),
+        check_no_compiled_skill_artifacts(),
         check_env_template(),
         check_gitignore_env(),
         check_benchmark_tasks(),

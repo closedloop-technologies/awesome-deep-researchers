@@ -19,8 +19,10 @@ def test_audit_covers_goal_critical_checks():
     assert "codex plugin manifest" in names
     assert "provider skill docs" in names
     assert "mirrored skill directories" in names
+    assert "mirrored skill tests" in names
     assert "skill frontmatter" in names
     assert "agents runnable skill scripts" in names
+    assert "compiled skill artifacts" in names
     assert "1Password env template" in names
     assert "canonical benchmark tasks" in names
     assert "under-$1 benchmark gate" in names

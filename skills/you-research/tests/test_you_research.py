@@ -38,6 +38,22 @@ def test_run_research_posts_input_and_lite_effort(monkeypatch):
     assert captured["timeout"] == 10
 
 
+def test_run_finance_research_uses_finance_endpoint(monkeypatch):
+    captured = {}
+    monkeypatch.setenv("YOU_API_KEY", "test-key")
+
+    def fake_post(url, headers, json, timeout):
+        captured.update({"url": url, "headers": headers, "json": json, "timeout": timeout})
+        return Response()
+
+    monkeypatch.setattr(you_research.requests, "post", fake_post)
+
+    you_research.run_research("Compare margins", research_effort="deep", timeout=10, api="finance")
+
+    assert captured["url"] == you_research.FINANCE_API_URL
+    assert captured["json"] == {"input": "Compare margins", "research_effort": "deep"}
+
+
 def test_render_markdown_includes_sources():
     markdown = you_research.render_markdown(Response().json())
 
