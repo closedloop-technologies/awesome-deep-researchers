@@ -13,8 +13,8 @@ import requests
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INDEX = REPO_ROOT / ".agents" / "skills" / "provider-source-index.md"
-SKILLS_ROOT = REPO_ROOT / ".agents" / "skills"
+DEFAULT_INDEX = REPO_ROOT / "skills" / "provider-source-index.md"
+SKILLS_ROOT = REPO_ROOT / "skills"
 DATE_RE = re.compile(r"^Last refreshed:\s*(\d{4}-\d{2}-\d{2})\.", re.MULTILINE)
 ROW_RE = re.compile(r"^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|", re.MULTILINE)
 
@@ -78,7 +78,7 @@ def check_source_index(
 
     entries = parse_source_entries(text)
     indexed_skills = {entry.skill for entry in entries}
-    for skill_name in expected_skill_names():
+    for skill_name in expected_skill_names(index_path.parent):
         results.append(
             CheckResult(
                 skill_name in indexed_skills,

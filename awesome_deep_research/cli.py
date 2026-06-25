@@ -32,6 +32,7 @@ class SkillInfo:
 
 SKILL_ROOTS = [
     ("agents", REPO_ROOT / ".agents" / "skills"),
+    ("plugin", REPO_ROOT / "skills"),
 ]
 
 
@@ -94,7 +95,7 @@ def parse_skill_description(skill_dir: Path) -> str:
 def list_skills_command(_: argparse.Namespace) -> int:
     skills = load_skill_infos(include_documentation=True)
     if not skills:
-        print("No skills found under .agents/skills/", file=sys.stderr)
+        print("No skills found under .agents/skills/ or skills/", file=sys.stderr)
         return 1
 
     for name, skill in sorted(skills.items()):

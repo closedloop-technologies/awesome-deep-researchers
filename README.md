@@ -21,7 +21,7 @@ Deep research agents go beyond simple Q&A—they autonomously plan research stra
 ### General Purpose Deep Research
 
 Pricing and model availability change frequently. Use
-`.agents/skills/provider-source-index.md` and `python -m
+`skills/provider-source-index.md` and `python -m
 awesome_deep_research.source_refresh --check-links` before refreshing pricing
 or model guidance.
 
@@ -181,7 +181,8 @@ filing analysis.
 ## Codex Plugin and Skills
 
 This repo is also structured as a Codex Plugin via
-`.codex-plugin/plugin.json`. The Codex-facing skills live in `.agents/skills/`:
+`.codex-plugin/plugin.json`. The packaged Codex-facing skills live in
+`skills/`, mirrored from `.agents/skills/` for local agent workflows:
 
 - `deep-research-api-calls` documents API-key environment names, provider call
   patterns, cost controls, and under-$1 benchmark prompt guidance.
@@ -193,7 +194,7 @@ This repo is also structured as a Codex Plugin via
 
 Normalization guidance is in `docs/okf-normalization.md`. Canonical low-cost
 benchmark tasks are in `docs/benchmark-tasks.md`. Provider source links are in
-`.agents/skills/provider-source-index.md`.
+`skills/provider-source-index.md`.
 
 1Password setup guidance is in `docs/onepassword-env.md`, with signup URLs and
 required API-key field names in `docs/api-key-signup-checklist.md`.
@@ -213,21 +214,23 @@ python -m awesome_deep_research.source_refresh
 ## Agent Skills
 
 This repository includes ready-to-use **Agent Skills** for several key deep research APIs and frameworks. Skills live under `.agents/skills` and can be run through their scripts, benchmark tools, fan-out tooling, or the optional `adr` wrapper.
+The plugin package reads the mirrored `skills/` directory, while local agent
+workflows can use `.agents/skills/`.
 
 ### Available Skills
 
 | Skill Name | Type | Description |
 |------------|------|-------------|
-| [perplexity-sonar](.agents/skills/perplexity-sonar) | Commercial API | Real-time, citation-backed answers using Perplexity Sonar API |
-| [xai-grok](.agents/skills/xai-grok) | Commercial API | Real-time web and X (Twitter) search with Grok Agent Tools |
-| [exa-research](.agents/skills/exa-research) | Commercial API | Neural search, content retrieval, and automated research |
-| [tavily-search](.agents/skills/tavily-search) | Commercial API | LLM-optimized real-time web search for RAG applications |
-| [jina-ai](.agents/skills/jina-ai) | Commercial API | URL to Markdown conversion and web search |
-| [gpt-researcher](.agents/skills/gpt-researcher) | Open Source | Autonomous research agent for comprehensive reports |
-| [stanford-storm](.agents/skills/stanford-storm) | Open Source | Wikipedia-style article generation with citations |
-| [openai-deep-research](.agents/skills/openai-deep-research) | Commercial API | Launch OpenAI Deep Research (o3/o4) autonomous research runs |
-| [langchain-deep-research](.agents/skills/langchain-deep-research) | Open Source | Iterative research with reflection and knowledge gap analysis |
-| [smolagents](.agents/skills/smolagents) | Open Source | Code-based agentic framework with 30% token efficiency gain |
+| [perplexity-sonar](skills/perplexity-sonar) | Commercial API | Real-time, citation-backed answers using Perplexity Sonar API |
+| [xai-grok](skills/xai-grok) | Commercial API | Real-time web and X (Twitter) search with Grok Agent Tools |
+| [exa-research](skills/exa-research) | Commercial API | Neural search, content retrieval, and automated research |
+| [tavily-search](skills/tavily-search) | Commercial API | LLM-optimized real-time web search for RAG applications |
+| [jina-ai](skills/jina-ai) | Commercial API | URL to Markdown conversion and web search |
+| [gpt-researcher](skills/gpt-researcher) | Open Source | Autonomous research agent for comprehensive reports |
+| [stanford-storm](skills/stanford-storm) | Open Source | Wikipedia-style article generation with citations |
+| [openai-deep-research](skills/openai-deep-research) | Commercial API | Launch OpenAI Deep Research (o3/o4) autonomous research runs |
+| [langchain-deep-research](skills/langchain-deep-research) | Open Source | Iterative research with reflection and knowledge gap analysis |
+| [smolagents](skills/smolagents) | Open Source | Code-based agentic framework with 30% token efficiency gain |
 
 ### Installation
 
@@ -240,7 +243,7 @@ Each skill directory contains:
 To install a skill:
 
 ```bash
-cd .agents/skills/<skill-name>
+cd skills/<skill-name>
 pip install -r requirements.txt
 ```
 
@@ -253,7 +256,7 @@ Run agent skills without the IDE using the `adr` CLI (exposed via `python -m awe
 1. **Prerequisites**
 
    - Install the [Claude Code CLI](https://www.anthropic.com/claude)
-   - Configure API keys required by each skill (see `.agents/skills/<skill>/SKILL.md`)
+   - Configure API keys required by each skill (see `skills/<skill>/SKILL.md`)
    - Optional: install skill-specific dependencies listed in each `requirements.txt`
 
 2. **Usage**

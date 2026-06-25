@@ -37,6 +37,30 @@ def test_load_skill_infos_includes_agents_documentation_skills():
     assert skills["gemini-deep-research"].runnable is True
 
 
+def test_load_skill_infos_falls_back_to_packaged_plugin_skills(tmp_path: Path, monkeypatch):
+    agents_root = tmp_path / ".agents" / "skills"
+    plugin_root = tmp_path / "skills"
+    skill_root = plugin_root / "packaged-skill"
+    scripts_root = skill_root / "scripts"
+    scripts_root.mkdir(parents=True)
+    (skill_root / "SKILL.md").write_text(
+        "---\nname: packaged-skill\ndescription: Packaged fallback.\n---\n",
+        encoding="utf-8",
+    )
+    (scripts_root / "run.py").write_text("print('ok')\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli,
+        "SKILL_ROOTS",
+        [("agents", agents_root), ("plugin", plugin_root)],
+    )
+
+    skills = cli.load_skill_infos(include_documentation=True)
+
+    assert skills["packaged-skill"].source == "plugin"
+    assert skills["packaged-skill"].runnable is True
+
+
 def test_load_skills_only_returns_runnable_skills():
     skills = cli.load_skills()
 
