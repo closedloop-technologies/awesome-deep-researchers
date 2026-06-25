@@ -41,6 +41,19 @@ def test_env_file_rejects_duplicate_required_assignment(tmp_path: Path):
     assert results[0].detail == "duplicate assignment"
 
 
+def test_env_file_rejects_whitespace_in_op_references(tmp_path: Path):
+    env_file = tmp_path / ".env.adr"
+    env_file.write_text(
+        "OPENAI_API_KEY=op://awesome-deep-researchers/api keys/OPENAI_API_KEY\n",
+        encoding="utf-8",
+    )
+
+    results = op_env.check_env_file(env_file, ["OPENAI_API_KEY"])
+
+    assert results[0].ok is False
+    assert results[0].detail == "not an op:// reference"
+
+
 def test_live_environment_reports_set_without_secret_value(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
 
