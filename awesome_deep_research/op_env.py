@@ -27,8 +27,7 @@ class EnvCheckResult:
     detail: str
 
 
-def parse_env_file(path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
+def iter_env_assignments(path: Path) -> Iterable[tuple[str, str]]:
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
@@ -36,7 +35,13 @@ def parse_env_file(path: Path) -> dict[str, str]:
         if "=" not in line:
             continue
         key, value = line.split("=", 1)
-        values[key.strip()] = value.strip().strip('"').strip("'")
+        yield key.strip(), value.strip().strip('"').strip("'")
+
+
+def parse_env_file(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for key, value in iter_env_assignments(path):
+        values[key] = value
     return values
 
 
@@ -45,10 +50,16 @@ def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckRe
         return [EnvCheckResult("env file", False, f"{path} does not exist")]
 
     values = parse_env_file(path)
+    counts: dict[str, int] = {}
+    for key, _value in iter_env_assignments(path):
+        counts[key] = counts.get(key, 0) + 1
+
     results = []
     for name in sorted(required_names):
         value = values.get(name, "")
-        if not value:
+        if counts.get(name, 0) > 1:
+            results.append(EnvCheckResult(name, False, "duplicate assignment"))
+        elif not value:
             results.append(EnvCheckResult(name, False, "missing"))
         elif not OP_REF_RE.match(value):
             results.append(EnvCheckResult(name, False, "not an op:// reference"))
