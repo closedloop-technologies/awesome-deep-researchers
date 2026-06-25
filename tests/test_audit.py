@@ -29,6 +29,7 @@ def test_audit_covers_goal_critical_checks():
     assert "benchmark OKF normalization" in names
     assert "custom data benchmark command" in names
     assert "provider source index" in names
+    assert "mirrored provider source indexes" in names
     assert "custom data source guide" in names
     assert "live benchmark runbook" in names
     assert "live smoke runner" in names

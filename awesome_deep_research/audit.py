@@ -282,6 +282,28 @@ def check_provider_source_index() -> AuditResult:
     )
 
 
+def check_mirrored_provider_source_indexes() -> AuditResult:
+    agents_index = REPO_ROOT / ".agents" / "skills" / "provider-source-index.md"
+    packaged_index = REPO_ROOT / "skills" / "provider-source-index.md"
+    missing = [
+        str(path.relative_to(REPO_ROOT))
+        for path in [agents_index, packaged_index]
+        if not path.exists()
+    ]
+    if missing:
+        return AuditResult(
+            "mirrored provider source indexes",
+            False,
+            "missing: " + ", ".join(missing),
+        )
+    ok = read_text(agents_index) == read_text(packaged_index)
+    return AuditResult(
+        "mirrored provider source indexes",
+        ok,
+        "source indexes match" if ok else "source indexes differ",
+    )
+
+
 def check_source_refresh_checker() -> AuditResult:
     path = REPO_ROOT / "awesome_deep_research" / "source_refresh.py"
     if not path.exists():
@@ -395,6 +417,7 @@ def run_audit() -> List[AuditResult]:
         check_benchmark_auto_okf(),
         check_custom_data_benchmark_command(),
         check_provider_source_index(),
+        check_mirrored_provider_source_indexes(),
         check_source_refresh_checker(),
         check_readme_drift_controls(),
         check_scaffold_cleanup(),
