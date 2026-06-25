@@ -76,12 +76,13 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         )
     if parsed.scheme in {"http", "https"} and not parsed.netloc:
         return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
-    if not parsed.scheme and Path(entry.source).is_absolute():
+    local_path = unquote(parsed.path) if not parsed.scheme else entry.source
+    if not parsed.scheme and Path(local_path).is_absolute():
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must be repo-relative",
         )
-    if not parsed.scheme and ".." in Path(entry.source).parts:
+    if not parsed.scheme and ".." in Path(local_path).parts:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain parent directory references",
