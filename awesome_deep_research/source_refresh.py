@@ -74,12 +74,20 @@ def check_source_index(
         results.append(CheckResult(False, "missing Last refreshed date"))
     else:
         age = (today - refreshed).days
-        results.append(
-            CheckResult(
-                age <= max_age_days,
-                f"Last refreshed {refreshed.isoformat()} ({age} days old)",
+        if age < 0:
+            results.append(
+                CheckResult(
+                    False,
+                    f"Last refreshed {refreshed.isoformat()} is in the future",
+                )
             )
-        )
+        else:
+            results.append(
+                CheckResult(
+                    age <= max_age_days,
+                    f"Last refreshed {refreshed.isoformat()} ({age} days old)",
+                )
+            )
 
     entries = parse_source_entries(text)
     for entry in entries:

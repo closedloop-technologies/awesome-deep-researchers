@@ -238,6 +238,30 @@ def test_source_index_checker_fails_stale_index():
     assert any(not result.ok and "Last refreshed" in result.message for result in results)
 
 
+def test_source_index_checker_fails_future_refresh_dates(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-24.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok and "Last refreshed 2026-06-24 is in the future" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_local_source_link_rejects_path_outside_repo(tmp_path):
     outside_doc = tmp_path.parent / "outside.md"
     outside_doc.write_text("outside", encoding="utf-8")
