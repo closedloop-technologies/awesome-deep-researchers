@@ -19,6 +19,7 @@ SKILLS_ROOT = REPO_ROOT / "skills"
 DATE_RE = re.compile(r"^Last refreshed:\s*(\d{4}-\d{2}-\d{2})\.", re.MULTILINE)
 ROW_RE = re.compile(r"^\|\s*`([^`]*)`\s*\|\s*([^|]*?)\s*\|", re.MULTILINE)
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+ENCODED_PATH_SEPARATOR_RE = re.compile(r"%2f|%5c", re.IGNORECASE)
 
 
 @dataclass
@@ -87,6 +88,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not include query parameters",
+        )
+    if not parsed.scheme and ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not encode path separators",
         )
     local_path = unquote(parsed.path) if not parsed.scheme else entry.source
     if not parsed.scheme and not local_path:
@@ -275,6 +281,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not include query parameters",
+        )
+    if ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not encode path separators",
         )
     local_source_path = unquote(parsed.path)
     if not local_source_path:
