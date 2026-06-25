@@ -76,6 +76,14 @@ def has_remote_parent_directory_reference(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and ".." in Path(unquote(parsed.path)).parts
 
 
+def decoded_path_segments(value: str) -> list[str]:
+    return unquote(value).split("/")
+
+
+def has_current_directory_reference(value: str) -> bool:
+    return "." in decoded_path_segments(value)
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
@@ -117,6 +125,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} URL path must not contain parent directory references",
         )
+    if parsed.scheme in {"http", "https"} and has_current_directory_reference(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not contain current directory references",
+        )
     if parsed.scheme in {"http", "https"} and (
         parsed.username is not None or parsed.password is not None
     ):
@@ -154,6 +167,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain parent directory references",
+        )
+    if not parsed.scheme and has_current_directory_reference(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain current directory references",
         )
     return None
 
