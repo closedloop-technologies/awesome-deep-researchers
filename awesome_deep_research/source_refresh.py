@@ -93,11 +93,20 @@ def check_source_index(
                 "duplicate source index rows: " + ", ".join(duplicate_entries),
             )
         )
-    for skill_name in expected_skill_names(index_path.parent):
+    expected_skills = set(expected_skill_names(index_path.parent))
+    for skill_name in sorted(expected_skills):
         results.append(
             CheckResult(
                 skill_name in indexed_skills,
                 f"{skill_name}: {'indexed' if skill_name in indexed_skills else 'missing'}",
+            )
+        )
+    unknown_skills = sorted(indexed_skills - expected_skills)
+    if unknown_skills:
+        results.append(
+            CheckResult(
+                False,
+                "unknown source index skills: " + ", ".join(unknown_skills),
             )
         )
 
