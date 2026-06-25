@@ -340,6 +340,28 @@ def test_source_index_checker_fails_stale_index():
     assert any(not result.ok and "Last refreshed" in result.message for result in results)
 
 
+def test_source_index_checker_rejects_negative_max_age_days():
+    results = source_refresh.check_source_index(
+        max_age_days=-1,
+        today=date(2026, 6, 23),
+    )
+
+    assert results == [
+        source_refresh.CheckResult(False, "max_age_days must be a non-negative integer")
+    ]
+
+
+def test_source_index_checker_rejects_non_integer_max_age_days():
+    results = source_refresh.check_source_index(
+        max_age_days=True,
+        today=date(2026, 6, 23),
+    )
+
+    assert results == [
+        source_refresh.CheckResult(False, "max_age_days must be a non-negative integer")
+    ]
+
+
 def test_source_index_checker_fails_future_refresh_dates(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)

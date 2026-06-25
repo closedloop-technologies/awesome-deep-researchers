@@ -78,6 +78,10 @@ def check_source_index(
     today: date | None = None,
 ) -> List[CheckResult]:
     today = today or datetime.now().date()
+    if isinstance(max_age_days, bool) or not isinstance(max_age_days, int):
+        return [CheckResult(False, "max_age_days must be a non-negative integer")]
+    if max_age_days < 0:
+        return [CheckResult(False, "max_age_days must be a non-negative integer")]
     if not index_path.exists():
         return [CheckResult(False, f"missing source index: {index_path}")]
 
