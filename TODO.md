@@ -1,4 +1,8 @@
-# TODO
+# Completed Implementation Checklist
+
+This repo's original implementation checklist is complete. Keep this file as a
+historical map to the shipped docs, skills, benchmark runner, and latest
+aggregate report.
 
 1. [x] Research all of the top deep research APIs and frameworks
 2. [x] Create agent skill files for each of them

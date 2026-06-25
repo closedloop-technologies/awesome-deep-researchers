@@ -262,6 +262,34 @@ def check_readme_drift_controls() -> AuditResult:
     )
 
 
+def check_scaffold_cleanup() -> AuditResult:
+    checks = {
+        "TODO.md": "# Completed Implementation Checklist",
+        "pyproject.toml": "testpaths = [",
+    }
+    missing = [
+        f"{path} missing {snippet}"
+        for path, snippet in checks.items()
+        if snippet not in read_text(REPO_ROOT / path)
+    ]
+    forbidden = {
+        "TODO.md": ["# TODO"],
+        "pyproject.toml": ["ADD/UPDATE THESE CONFIGURATIONS"],
+    }
+    lingering = [
+        f"{path} contains {snippet}"
+        for path, snippets in forbidden.items()
+        for snippet in snippets
+        if snippet in read_text(REPO_ROOT / path)
+    ]
+    failures = missing + lingering
+    return AuditResult(
+        "scaffold cleanup",
+        not failures,
+        "failures: " + ", ".join(failures) if failures else "starter checklist cleaned up",
+    )
+
+
 def check_domain_specific_guide() -> AuditResult:
     path = REPO_ROOT / "docs" / "domain-specific-deep-research.md"
     if not path.exists():
@@ -319,6 +347,7 @@ def run_audit() -> List[AuditResult]:
         check_provider_source_index(),
         check_source_refresh_checker(),
         check_readme_drift_controls(),
+        check_scaffold_cleanup(),
         check_domain_specific_guide(),
         check_file(REPO_ROOT / "docs" / "deep-research-agent.md", "deep research agent guide"),
         check_file(REPO_ROOT / "docs" / "custom-data-sources.md", "custom data source guide"),

@@ -32,6 +32,7 @@ def test_audit_covers_goal_critical_checks():
     assert "live smoke runner" in names
     assert "source refresh checker" in names
     assert "README drift controls" in names
+    assert "scaffold cleanup" in names
     assert "domain-specific guide" in names
     assert "API key signup checklist" in names
 
