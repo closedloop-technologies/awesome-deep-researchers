@@ -25,7 +25,7 @@ def test_audit_covers_goal_critical_checks():
     assert "skill frontmatter" in names
     assert "provider op command examples" in names
     assert "agents runnable skill scripts" in names
-    assert "compiled skill artifacts" in names
+    assert "compiled Python artifacts" in names
     assert "1Password env template" in names
     assert "env secret ignore" in names
     assert "canonical benchmark tasks" in names
@@ -44,6 +44,23 @@ def test_audit_covers_goal_critical_checks():
     assert "scaffold cleanup" in names
     assert "domain-specific guide" in names
     assert "API key signup checklist" in names
+
+
+def test_compiled_artifact_audit_scans_all_tracked_files(monkeypatch):
+    class Result:
+        stdout = "awesome_deep_research/__pycache__/audit.cpython-313.pyc\n"
+
+    def fake_run(*args, **kwargs):
+        assert args[0] == ["git", "ls-files"]
+        return Result()
+
+    monkeypatch.setattr(audit.subprocess, "run", fake_run)
+
+    result = audit.check_no_compiled_python_artifacts()
+
+    assert result.ok is False
+    assert result.name == "compiled Python artifacts"
+    assert "awesome_deep_research/__pycache__/audit.cpython-313.pyc" in result.detail
 
 
 def test_readme_mentions_op_env_checker():

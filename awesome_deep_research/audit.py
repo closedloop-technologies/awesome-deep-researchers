@@ -259,9 +259,9 @@ def check_agents_runnable_skills() -> AuditResult:
     return AuditResult("agents runnable skill scripts", ok, "missing: " + ", ".join(missing) if missing else "all present")
 
 
-def check_no_compiled_skill_artifacts() -> AuditResult:
+def check_no_compiled_python_artifacts() -> AuditResult:
     tracked_files = subprocess.run(
-        ["git", "ls-files", ".agents/skills", "skills"],
+        ["git", "ls-files"],
         cwd=REPO_ROOT,
         text=True,
         check=True,
@@ -273,7 +273,7 @@ def check_no_compiled_skill_artifacts() -> AuditResult:
         if "/__pycache__/" in path or path.endswith((".pyc", ".pyo"))
     )
     return AuditResult(
-        "compiled skill artifacts",
+        "compiled Python artifacts",
         not compiled,
         "found: " + ", ".join(compiled) if compiled else "none present",
     )
@@ -510,7 +510,7 @@ def run_audit() -> List[AuditResult]:
         check_skill_frontmatter(),
         check_provider_skill_commands(),
         check_agents_runnable_skills(),
-        check_no_compiled_skill_artifacts(),
+        check_no_compiled_python_artifacts(),
         check_env_template(),
         check_gitignore_env(),
         check_benchmark_tasks(),
