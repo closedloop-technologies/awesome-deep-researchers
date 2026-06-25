@@ -56,6 +56,21 @@ def expected_skill_names(skills_root: Path = SKILLS_ROOT) -> List[str]:
     return sorted(path.name for path in skills_root.iterdir() if path.is_dir())
 
 
+def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
+    parsed = urlparse(entry.source)
+    if parsed.scheme and parsed.scheme not in {"http", "https"}:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} has unsupported URL scheme",
+        )
+    if not parsed.scheme and Path(entry.source).is_absolute():
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must be repo-relative",
+        )
+    return None
+
+
 def check_source_index(
     index_path: Path = DEFAULT_INDEX,
     *,
@@ -101,6 +116,10 @@ def check_source_index(
             results.append(
                 CheckResult(False, f"{entry.skill or '<blank>'}: source must be non-empty")
             )
+        else:
+            source_result = validate_source_reference(entry)
+            if source_result is not None:
+                results.append(source_result)
     indexed_skills = {entry.skill for entry in entries}
     duplicate_entries = sorted(
         f"{skill} -> {source}"

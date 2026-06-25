@@ -282,6 +282,58 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_unsupported_source_schemes(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | ftp://example.com/source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and "example-skill: ftp://example.com/source.md has unsupported URL scheme"
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_absolute_local_source_paths(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    absolute_source = tmp_path / "docs" / "source.md"
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        f"""# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | {absolute_source} |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and f"example-skill: {absolute_source} must be repo-relative" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_stale_index():
     results = source_refresh.check_source_index(max_age_days=30, today=date(2026, 8, 1))
 
