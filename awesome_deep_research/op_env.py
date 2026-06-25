@@ -18,6 +18,7 @@ DEFAULT_TEMPLATE_FILE = REPO_ROOT / ".env.adr.example"
 DEFAULT_OP_VAULT = "awesome-deep-researchers"
 DEFAULT_OP_ITEM = "api-keys"
 OP_REF_RE = re.compile(r"^op://[^\s/]+/[^\s/]+/[^\s/]+$")
+ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
 
 @dataclass
@@ -28,14 +29,19 @@ class EnvCheckResult:
 
 
 def iter_env_assignments(path: Path) -> Iterable[tuple[str, str]]:
+    for raw_key, value in iter_raw_env_assignments(path):
+        yield raw_key.strip(), value
+
+
+def iter_raw_env_assignments(path: Path) -> Iterable[tuple[str, str]]:
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
         if "=" not in line:
             continue
-        key, value = line.split("=", 1)
-        yield key.strip(), value.strip().strip('"').strip("'")
+        key, value = raw_line.split("=", 1)
+        yield key, value.strip().strip('"').strip("'")
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -51,14 +57,20 @@ def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckRe
 
     values = parse_env_file(path)
     counts: dict[str, int] = {}
-    for key, _value in iter_env_assignments(path):
+    malformed: set[str] = set()
+    for raw_key, _value in iter_raw_env_assignments(path):
+        key = raw_key.strip()
         counts[key] = counts.get(key, 0) + 1
+        if key != raw_key or not ENV_NAME_RE.match(key):
+            malformed.add(key)
 
     results = []
     for name in sorted(required_names):
         value = values.get(name, "")
         if counts.get(name, 0) > 1:
             results.append(EnvCheckResult(name, False, "duplicate assignment"))
+        elif name in malformed:
+            results.append(EnvCheckResult(name, False, "malformed assignment"))
         elif not value:
             results.append(EnvCheckResult(name, False, "missing"))
         elif not OP_REF_RE.match(value):
