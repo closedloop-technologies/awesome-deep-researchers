@@ -89,6 +89,28 @@ def test_env_file_rejects_malformed_required_assignment_name(tmp_path: Path):
     assert results[0].detail == "malformed assignment"
 
 
+def test_env_file_rejects_malformed_unrequired_assignment_name(tmp_path: Path):
+    env_file = tmp_path / ".env.adr"
+    env_file.write_text(
+        "\n".join(
+            [
+                "OPENAI_API_KEY=op://awesome-deep-researchers/api-keys/OPENAI_API_KEY",
+                "bad key=op://awesome-deep-researchers/api-keys/BAD",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    results = op_env.check_env_file(env_file, ["OPENAI_API_KEY"])
+
+    assert any(
+        result.name == "bad key"
+        and result.ok is False
+        and result.detail == "malformed assignment"
+        for result in results
+    ), op_env.format_results(results)
+
+
 def test_live_environment_reports_set_without_secret_value(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
 

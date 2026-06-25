@@ -79,6 +79,8 @@ def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckRe
             results.append(EnvCheckResult(name, False, "not an op:// reference"))
         else:
             results.append(EnvCheckResult(name, True, "op reference present"))
+    for name in sorted(malformed - set(required_names)):
+        results.append(EnvCheckResult(name or "<blank>", False, "malformed assignment"))
     op_reference_counts = Counter(
         values.get(name, "")
         for name in required_names
