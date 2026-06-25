@@ -29,6 +29,22 @@ def test_next_output_path_increments(tmp_path: Path):
     assert second.name == "OUTPUT-PERPLEXITY-SONAR-0002.md"
 
 
+def test_next_output_path_rejects_blank_skill_names(tmp_path: Path):
+    with pytest.raises(ValueError, match="skill_name must be a non-empty string"):
+        cli.next_output_path(tmp_path, "   ")
+
+
+def test_next_output_path_rejects_punctuation_only_skill_names(tmp_path: Path):
+    with pytest.raises(ValueError, match="skill_name must contain at least one"):
+        cli.next_output_path(tmp_path, "!!!")
+
+
+def test_next_output_path_trims_generated_tokens(tmp_path: Path):
+    output_path = cli.next_output_path(tmp_path, "-perplexity-sonar-")
+
+    assert output_path.name == "OUTPUT-PERPLEXITY-SONAR-0001.md"
+
+
 def test_load_skill_infos_includes_agents_documentation_skills():
     skills = cli.load_skill_infos(include_documentation=True)
 

@@ -283,7 +283,12 @@ def ensure_output_dir(path: Optional[str]) -> Path:
 
 
 def next_output_path(output_dir: Path, skill_name: str) -> Path:
+    if not isinstance(skill_name, str) or not skill_name.strip():
+        raise ValueError("skill_name must be a non-empty string.")
     token = re.sub(r"[^A-Z0-9]+", "-", skill_name.upper())
+    token = token.strip("-")
+    if not token:
+        raise ValueError("skill_name must contain at least one letter or number.")
     pattern = re.compile(rf"OUTPUT-{re.escape(token)}-(\d+)\.md$")
     max_index = 0
     for existing in output_dir.glob(f"OUTPUT-{token}-*.md"):
