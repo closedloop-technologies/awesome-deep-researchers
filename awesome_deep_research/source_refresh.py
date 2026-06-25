@@ -56,6 +56,10 @@ def expected_skill_names(skills_root: Path = SKILLS_ROOT) -> List[str]:
     return sorted(path.name for path in skills_root.iterdir() if path.is_dir())
 
 
+def normalized_skill_name(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-")
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
@@ -175,6 +179,20 @@ def check_source_index(
                 False,
                 "skill directories must be lowercase hyphen-case: "
                 + ", ".join(invalid_skill_dirs),
+            )
+        )
+    normalized_directory_counts = Counter(
+        normalized_skill_name(skill_name) for skill_name in expected_skills
+    )
+    duplicate_normalized_dirs = sorted(
+        skill_name for skill_name, count in normalized_directory_counts.items() if count > 1
+    )
+    if duplicate_normalized_dirs:
+        results.append(
+            CheckResult(
+                False,
+                "skill directories collide after normalization: "
+                + ", ".join(duplicate_normalized_dirs),
             )
         )
     for skill_name in sorted(expected_skills):
