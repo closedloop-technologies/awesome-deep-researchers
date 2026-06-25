@@ -23,9 +23,11 @@ def test_audit_covers_goal_critical_checks():
     assert "mirrored skill tests" in names
     assert "mirrored skill scripts" in names
     assert "skill frontmatter" in names
+    assert "provider op command examples" in names
     assert "agents runnable skill scripts" in names
     assert "compiled skill artifacts" in names
     assert "1Password env template" in names
+    assert "env secret ignore" in names
     assert "canonical benchmark tasks" in names
     assert "under-$1 benchmark gate" in names
     assert "benchmark command coverage" in names
