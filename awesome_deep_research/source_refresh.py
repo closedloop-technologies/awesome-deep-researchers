@@ -76,6 +76,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         )
     if parsed.scheme in {"http", "https"} and not parsed.netloc:
         return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
+    if not parsed.scheme and parsed.query:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not include query parameters",
+        )
     local_path = unquote(parsed.path) if not parsed.scheme else entry.source
     if not parsed.scheme and Path(local_path).is_absolute():
         return CheckResult(
