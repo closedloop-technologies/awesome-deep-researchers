@@ -70,6 +70,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} must be repo-relative",
         )
+    if not parsed.scheme and ".." in Path(entry.source).parts:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain parent directory references",
+        )
     return None
 
 
