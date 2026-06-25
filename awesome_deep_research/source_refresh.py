@@ -71,6 +71,11 @@ def has_trailing_host_dot(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and bool(parsed.hostname) and parsed.hostname.endswith(".")
 
 
+def has_remote_parent_directory_reference(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme in {"http", "https"} and ".." in Path(unquote(parsed.path)).parts
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
@@ -96,6 +101,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} host must not end with a dot",
+        )
+    if has_remote_parent_directory_reference(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not contain parent directory references",
         )
     if parsed.scheme in {"http", "https"} and (
         parsed.username is not None or parsed.password is not None
@@ -287,6 +297,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} host must not end with a dot",
+            )
+        if has_remote_parent_directory_reference(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not contain parent directory references",
             )
         if parsed.username is not None or parsed.password is not None:
             return CheckResult(
