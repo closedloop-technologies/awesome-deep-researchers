@@ -135,6 +135,55 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_invalid_skill_row_names(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `Example Skill` | https://example.com |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok and "Example Skill: skill name must be lowercase hyphen-case" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_invalid_skill_directory_names(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example_skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example_skill` | https://example.com |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and "skill directories must be lowercase hyphen-case: example_skill" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_blank_skill_rows(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)

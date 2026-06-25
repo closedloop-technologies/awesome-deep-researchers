@@ -18,6 +18,7 @@ DEFAULT_INDEX = REPO_ROOT / "skills" / "provider-source-index.md"
 SKILLS_ROOT = REPO_ROOT / "skills"
 DATE_RE = re.compile(r"^Last refreshed:\s*(\d{4}-\d{2}-\d{2})\.", re.MULTILINE)
 ROW_RE = re.compile(r"^\|\s*`([^`]*)`\s*\|\s*([^|]*?)\s*\|", re.MULTILINE)
+SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 @dataclass
@@ -84,6 +85,10 @@ def check_source_index(
     for entry in entries:
         if not entry.skill:
             results.append(CheckResult(False, "source index row has a blank skill name"))
+        elif not SKILL_NAME_RE.fullmatch(entry.skill):
+            results.append(
+                CheckResult(False, f"{entry.skill}: skill name must be lowercase hyphen-case")
+            )
         if not entry.source:
             results.append(
                 CheckResult(False, f"{entry.skill or '<blank>'}: source must be non-empty")
@@ -104,6 +109,17 @@ def check_source_index(
             )
         )
     expected_skills = set(expected_skill_names(index_path.parent))
+    invalid_skill_dirs = sorted(
+        skill_name for skill_name in expected_skills if not SKILL_NAME_RE.fullmatch(skill_name)
+    )
+    if invalid_skill_dirs:
+        results.append(
+            CheckResult(
+                False,
+                "skill directories must be lowercase hyphen-case: "
+                + ", ".join(invalid_skill_dirs),
+            )
+        )
     for skill_name in sorted(expected_skills):
         results.append(
             CheckResult(
