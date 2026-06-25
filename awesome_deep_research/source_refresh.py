@@ -131,7 +131,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         ok = 200 <= response.status_code < 400
         return CheckResult(ok, f"{entry.skill}: {entry.source} HTTP {response.status_code}")
 
-    local_path = repo_root / entry.source
+    local_path = (repo_root / entry.source).resolve()
+    try:
+        local_path.relative_to(repo_root.resolve())
+    except ValueError:
+        return CheckResult(False, f"{entry.skill}: {entry.source} escapes repo root")
     return CheckResult(local_path.exists(), f"{entry.skill}: {entry.source} local path")
 
 

@@ -115,3 +115,29 @@ def test_source_index_checker_fails_stale_index():
     results = source_refresh.check_source_index(max_age_days=30, today=date(2026, 8, 1))
 
     assert any(not result.ok and "Last refreshed" in result.message for result in results)
+
+
+def test_local_source_link_rejects_path_outside_repo(tmp_path):
+    outside_doc = tmp_path.parent / "outside.md"
+    outside_doc.write_text("outside", encoding="utf-8")
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "../outside.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "escapes repo root" in result.message
+
+
+def test_local_source_link_rejects_absolute_path_outside_repo(tmp_path):
+    outside_doc = tmp_path.parent / "outside.md"
+    outside_doc.write_text("outside", encoding="utf-8")
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", str(outside_doc.resolve())),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "escapes repo root" in result.message
