@@ -19,6 +19,7 @@ def test_audit_covers_goal_critical_checks():
     assert "codex plugin manifest" in names
     assert "provider skill docs" in names
     assert "mirrored skill directories" in names
+    assert "mirrored skill docs" in names
     assert "mirrored skill tests" in names
     assert "mirrored skill scripts" in names
     assert "skill frontmatter" in names
