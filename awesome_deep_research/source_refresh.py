@@ -66,6 +66,11 @@ def has_encoded_control_character(value: str) -> bool:
     return any(ord(character) < 32 or ord(character) == 127 for character in decoded)
 
 
+def has_trailing_host_dot(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme in {"http", "https"} and bool(parsed.hostname) and parsed.hostname.endswith(".")
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
@@ -87,6 +92,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         )
     if parsed.scheme in {"http", "https"} and not parsed.netloc:
         return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
+    if has_trailing_host_dot(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} host must not end with a dot",
+        )
     if parsed.scheme in {"http", "https"} and (
         parsed.username is not None or parsed.password is not None
     ):
@@ -273,6 +283,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(False, f"{entry.skill}: {entry.source} must use HTTPS")
         if not parsed.netloc:
             return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
+        if has_trailing_host_dot(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} host must not end with a dot",
+            )
         if parsed.username is not None or parsed.password is not None:
             return CheckResult(
                 False,
