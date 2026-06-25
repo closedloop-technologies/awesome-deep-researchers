@@ -89,6 +89,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             f"{entry.skill}: {entry.source} local source must not include query parameters",
         )
     local_path = unquote(parsed.path) if not parsed.scheme else entry.source
+    if not parsed.scheme and "\\" in local_path:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must use forward slashes",
+        )
     if not parsed.scheme and Path(local_path).is_absolute():
         return CheckResult(
             False,
