@@ -54,6 +54,28 @@ def test_env_file_rejects_whitespace_in_op_references(tmp_path: Path):
     assert results[0].detail == "not an op:// reference"
 
 
+def test_env_file_rejects_duplicate_op_references_across_required_names(tmp_path: Path):
+    env_file = tmp_path / ".env.adr"
+    env_file.write_text(
+        "\n".join(
+            [
+                "OPENAI_API_KEY=op://awesome-deep-researchers/api-keys/SHARED",
+                "TAVILY_API_KEY=op://awesome-deep-researchers/api-keys/SHARED",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    results = op_env.check_env_file(env_file, ["OPENAI_API_KEY", "TAVILY_API_KEY"])
+
+    assert any(
+        result.name == "op references"
+        and result.ok is False
+        and "duplicate references" in result.detail
+        for result in results
+    ), op_env.format_results(results)
+
+
 def test_env_file_rejects_malformed_required_assignment_name(tmp_path: Path):
     env_file = tmp_path / ".env.adr"
     env_file.write_text(

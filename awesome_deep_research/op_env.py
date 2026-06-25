@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence
@@ -65,7 +66,8 @@ def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckRe
             malformed.add(key)
 
     results = []
-    for name in sorted(required_names):
+    required_names = sorted(required_names)
+    for name in required_names:
         value = values.get(name, "")
         if counts.get(name, 0) > 1:
             results.append(EnvCheckResult(name, False, "duplicate assignment"))
@@ -77,6 +79,22 @@ def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckRe
             results.append(EnvCheckResult(name, False, "not an op:// reference"))
         else:
             results.append(EnvCheckResult(name, True, "op reference present"))
+    op_reference_counts = Counter(
+        values.get(name, "")
+        for name in required_names
+        if OP_REF_RE.match(values.get(name, ""))
+    )
+    duplicate_references = sorted(
+        reference for reference, count in op_reference_counts.items() if count > 1
+    )
+    if duplicate_references:
+        results.append(
+            EnvCheckResult(
+                "op references",
+                False,
+                "duplicate references: " + ", ".join(duplicate_references),
+            )
+        )
     return results
 
 
