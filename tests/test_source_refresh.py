@@ -135,6 +135,54 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_blank_skill_rows(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `` | https://example.com |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok and "source index row has a blank skill name" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_blank_source_rows(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` |   |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok and "example-skill: source must be non-empty" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_stale_index():
     results = source_refresh.check_source_index(max_age_days=30, today=date(2026, 8, 1))
 

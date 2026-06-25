@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_INDEX = REPO_ROOT / "skills" / "provider-source-index.md"
 SKILLS_ROOT = REPO_ROOT / "skills"
 DATE_RE = re.compile(r"^Last refreshed:\s*(\d{4}-\d{2}-\d{2})\.", re.MULTILINE)
-ROW_RE = re.compile(r"^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|", re.MULTILINE)
+ROW_RE = re.compile(r"^\|\s*`([^`]*)`\s*\|\s*([^|]*?)\s*\|", re.MULTILINE)
 
 
 @dataclass
@@ -81,6 +81,13 @@ def check_source_index(
         )
 
     entries = parse_source_entries(text)
+    for entry in entries:
+        if not entry.skill:
+            results.append(CheckResult(False, "source index row has a blank skill name"))
+        if not entry.source:
+            results.append(
+                CheckResult(False, f"{entry.skill or '<blank>'}: source must be non-empty")
+            )
     indexed_skills = {entry.skill for entry in entries}
     duplicate_entries = sorted(
         f"{skill} -> {source}"
