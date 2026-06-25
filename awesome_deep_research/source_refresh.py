@@ -48,7 +48,7 @@ def parse_source_entries(text: str) -> List[SourceEntry]:
     for skill, source in ROW_RE.findall(text):
         if skill == "Skill" or source.strip() == "Source":
             continue
-        entries.append(SourceEntry(skill=skill.strip(), source=source.strip()))
+        entries.append(SourceEntry(skill=skill, source=source.strip()))
     return entries
 
 
