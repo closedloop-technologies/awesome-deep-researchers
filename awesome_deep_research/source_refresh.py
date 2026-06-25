@@ -240,6 +240,12 @@ def check_source_index(
 
 
 def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float = 10.0) -> CheckResult:
+    if any(character.isspace() for character in entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain whitespace",
+        )
+
     parsed = urlparse(entry.source)
     if parsed.scheme in {"http", "https"}:
         if parsed.scheme == "http":
