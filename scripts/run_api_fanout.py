@@ -173,6 +173,11 @@ def parse_providers(values: Sequence[str] | None) -> List[str]:
     providers: List[str] = []
     for value in values:
         providers.extend(part.strip() for part in value.split(",") if part.strip())
+    duplicates = sorted(
+        provider for provider in set(providers) if providers.count(provider) > 1
+    )
+    if duplicates:
+        raise ValueError(f"duplicate providers: {', '.join(duplicates)}")
     return providers
 
 

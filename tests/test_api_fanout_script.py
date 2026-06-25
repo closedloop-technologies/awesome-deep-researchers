@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 from subprocess import CompletedProcess
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "run_api_fanout.py"
@@ -87,3 +89,10 @@ def test_fanout_skips_missing_env_without_running_provider(monkeypatch, tmp_path
     assert summary["results"][0]["provider"] == "perplexity-sonar"
     assert summary["results"][0]["skipped"] is True
     assert "PERPLEXITY_API_KEY" in (run_dir / "perplexity-sonar.stderr.txt").read_text(encoding="utf-8")
+
+
+def test_parse_providers_rejects_duplicates():
+    fanout = load_fanout_module()
+
+    with pytest.raises(ValueError, match="duplicate providers: tavily-search"):
+        fanout.parse_providers(["tavily-search,exa-research", "tavily-search"])
