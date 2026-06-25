@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import Iterable, List, Sequence
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import requests
 
@@ -231,7 +231,7 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
     if parsed.scheme:
         return CheckResult(False, f"{entry.skill}: {entry.source} has unsupported URL scheme")
 
-    local_path = (repo_root / entry.source).resolve()
+    local_path = (repo_root / unquote(parsed.path)).resolve()
     try:
         local_path.relative_to(repo_root.resolve())
     except ValueError:
