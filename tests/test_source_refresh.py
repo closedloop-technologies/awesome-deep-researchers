@@ -59,6 +59,30 @@ Last refreshed: 2026-06-23.
     assert all(result.ok for result in results), source_refresh.format_results(results)
 
 
+def test_source_index_checker_requires_canonical_table_header(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Name | Source |
+| --- | --- |
+| `example-skill` | https://example.com |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok and "source index table must include Skill and Source header" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_link_checker_resolves_local_paths_from_selected_index_repo_root(tmp_path):
     skills_root = tmp_path / "skills"
     docs_root = tmp_path / "docs"

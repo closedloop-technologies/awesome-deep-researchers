@@ -106,6 +106,8 @@ def check_source_index(
 
     text = index_path.read_text(encoding="utf-8")
     results: List[CheckResult] = []
+    if "| Skill | Source |" not in text:
+        results.append(CheckResult(False, "source index table must include Skill and Source header"))
 
     refreshed = parse_refreshed_date(text)
     if refreshed is None:
