@@ -157,6 +157,32 @@ def check_mirrored_skill_tests() -> AuditResult:
     )
 
 
+def check_mirrored_skill_scripts() -> AuditResult:
+    agents_scripts = {
+        path.relative_to(REPO_ROOT / ".agents" / "skills")
+        for path in (REPO_ROOT / ".agents" / "skills").glob("*/scripts/*.py")
+    }
+    packaged_scripts = {
+        path.relative_to(REPO_ROOT / "skills")
+        for path in (REPO_ROOT / "skills").glob("*/scripts/*.py")
+    }
+    failures = []
+    for relative in sorted(agents_scripts - packaged_scripts):
+        failures.append(f"missing from skills: {relative}")
+    for relative in sorted(packaged_scripts - agents_scripts):
+        failures.append(f"missing from .agents/skills: {relative}")
+    for relative in sorted(agents_scripts & packaged_scripts):
+        agents_text = read_text(REPO_ROOT / ".agents" / "skills" / relative)
+        packaged_text = read_text(REPO_ROOT / "skills" / relative)
+        if agents_text != packaged_text:
+            failures.append(f"script mirror differs: {relative}")
+    return AuditResult(
+        "mirrored skill scripts",
+        not failures,
+        "; ".join(failures) if failures else "skill scripts match",
+    )
+
+
 def check_skill_frontmatter() -> AuditResult:
     failures = []
     for root in [".agents/skills", "skills"]:
@@ -453,6 +479,7 @@ def run_audit() -> List[AuditResult]:
         check_provider_skills(),
         check_mirrored_skill_directories(),
         check_mirrored_skill_tests(),
+        check_mirrored_skill_scripts(),
         check_skill_frontmatter(),
         check_provider_skill_commands(),
         check_agents_runnable_skills(),
