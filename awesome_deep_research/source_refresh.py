@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
@@ -78,6 +79,20 @@ def check_source_index(
 
     entries = parse_source_entries(text)
     indexed_skills = {entry.skill for entry in entries}
+    duplicate_entries = sorted(
+        f"{skill} -> {source}"
+        for (skill, source), count in Counter(
+            (entry.skill, entry.source) for entry in entries
+        ).items()
+        if count > 1
+    )
+    if duplicate_entries:
+        results.append(
+            CheckResult(
+                False,
+                "duplicate source index rows: " + ", ".join(duplicate_entries),
+            )
+        )
     for skill_name in expected_skill_names(index_path.parent):
         results.append(
             CheckResult(
