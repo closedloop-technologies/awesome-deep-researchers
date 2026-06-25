@@ -63,6 +63,8 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} has unsupported URL scheme",
         )
+    if parsed.scheme in {"http", "https"} and not parsed.netloc:
+        return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
     if not parsed.scheme and Path(entry.source).is_absolute():
         return CheckResult(
             False,
