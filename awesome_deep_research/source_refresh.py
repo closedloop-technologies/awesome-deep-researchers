@@ -141,7 +141,8 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
 
 def check_links(index_path: Path = DEFAULT_INDEX) -> List[CheckResult]:
     text = index_path.read_text(encoding="utf-8")
-    return [check_link(entry) for entry in parse_source_entries(text)]
+    repo_root = index_path.parent.parent
+    return [check_link(entry, repo_root=repo_root) for entry in parse_source_entries(text)]
 
 
 def format_results(results: Iterable[CheckResult]) -> str:

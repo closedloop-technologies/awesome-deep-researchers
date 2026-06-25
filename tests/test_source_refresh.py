@@ -59,6 +59,30 @@ Last refreshed: 2026-06-23.
     assert all(result.ok for result in results), source_refresh.format_results(results)
 
 
+def test_link_checker_resolves_local_paths_from_selected_index_repo_root(tmp_path):
+    skills_root = tmp_path / "skills"
+    docs_root = tmp_path / "docs"
+    (skills_root / "example-skill").mkdir(parents=True)
+    docs_root.mkdir()
+    (docs_root / "source.md").write_text("source", encoding="utf-8")
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs/source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_links(index_path)
+
+    assert all(result.ok for result in results), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_duplicate_skill_rows(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
