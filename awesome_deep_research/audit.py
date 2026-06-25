@@ -130,6 +130,35 @@ def check_mirrored_skill_directories() -> AuditResult:
     )
 
 
+def check_skill_frontmatter() -> AuditResult:
+    failures = []
+    for root in [".agents/skills", "skills"]:
+        for path in sorted((REPO_ROOT / root).glob("*/SKILL.md")):
+            text = read_text(path)
+            relative = path.relative_to(REPO_ROOT)
+            if not text.startswith("---\n"):
+                failures.append(f"{relative} missing frontmatter")
+                continue
+            end = text.find("\n---", 4)
+            if end == -1:
+                failures.append(f"{relative} missing closing frontmatter")
+                continue
+            frontmatter = {}
+            for line in text[4:end].splitlines():
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    frontmatter[key.strip()] = value.strip().strip("\"'")
+            if frontmatter.get("name") != path.parent.name:
+                failures.append(f"{relative} name must match skill directory")
+            if not frontmatter.get("description"):
+                failures.append(f"{relative} description must be non-empty")
+    return AuditResult(
+        "skill frontmatter",
+        not failures,
+        "failures: " + ", ".join(failures) if failures else "all skill metadata valid",
+    )
+
+
 def check_provider_skill_commands() -> AuditResult:
     missing = []
     for skill_name in sorted(REQUIRED_OP_EXAMPLE_SKILLS):
@@ -354,6 +383,7 @@ def run_audit() -> List[AuditResult]:
         check_plugin_manifest(),
         check_provider_skills(),
         check_mirrored_skill_directories(),
+        check_skill_frontmatter(),
         check_provider_skill_commands(),
         check_agents_runnable_skills(),
         check_env_template(),
