@@ -598,6 +598,31 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_local_fragment_only_sources(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | #heading |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok and "example-skill: #heading local source must include a path"
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_local_source_paths_with_backslashes(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -723,3 +748,13 @@ def test_local_source_link_rejects_directory_sources(tmp_path):
 
     assert result.ok is False
     assert "local path must be a file" in result.message
+
+
+def test_local_source_link_rejects_fragment_only_sources(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "#heading"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must include a path" in result.message

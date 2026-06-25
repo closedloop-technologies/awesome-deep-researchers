@@ -89,6 +89,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             f"{entry.skill}: {entry.source} local source must not include query parameters",
         )
     local_path = unquote(parsed.path) if not parsed.scheme else entry.source
+    if not parsed.scheme and not local_path:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must include a path",
+        )
     if not parsed.scheme and "\\" in local_path:
         return CheckResult(
             False,
@@ -251,7 +256,10 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
     if parsed.scheme:
         return CheckResult(False, f"{entry.skill}: {entry.source} has unsupported URL scheme")
 
-    local_path = (repo_root / unquote(parsed.path)).resolve()
+    local_source_path = unquote(parsed.path)
+    if not local_source_path:
+        return CheckResult(False, f"{entry.skill}: {entry.source} local source must include a path")
+    local_path = (repo_root / local_source_path).resolve()
     try:
         local_path.relative_to(repo_root.resolve())
     except ValueError:
