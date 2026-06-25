@@ -131,12 +131,18 @@ def check_op_item_scaffold(
         return [EnvCheckResult("op item", False, f"invalid JSON from op: {exc}")]
 
     fields = payload.get("fields", [])
-    labels = {field.get("label") for field in fields if isinstance(field, dict)}
+    label_counts = Counter(
+        field.get("label") for field in fields if isinstance(field, dict)
+    )
+    labels = set(label_counts)
     results = [
         EnvCheckResult("op vault", payload.get("vault", {}).get("name") == vault, vault),
         EnvCheckResult("op item", payload.get("title") == item, item),
     ]
     for name in sorted(required_names):
+        if label_counts.get(name, 0) > 1:
+            results.append(EnvCheckResult(name, False, "duplicate field"))
+            continue
         results.append(
             EnvCheckResult(
                 name,

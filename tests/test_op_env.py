@@ -143,3 +143,27 @@ def test_op_item_scaffold_reports_missing_fields(monkeypatch):
     results = op_env.check_op_item_scaffold(["OPENAI_API_KEY", "YOU_API_KEY"])
 
     assert any(result.name == "YOU_API_KEY" and not result.ok for result in results)
+
+
+def test_op_item_scaffold_reports_duplicate_required_fields(monkeypatch):
+    payload = """
+    {
+      "title": "api-keys",
+      "vault": {"name": "awesome-deep-researchers"},
+      "fields": [
+        {"label": "OPENAI_API_KEY"},
+        {"label": "OPENAI_API_KEY"}
+      ]
+    }
+    """
+
+    def fake_run(*args, **kwargs):
+        return CompletedProcess(args[0], 0, stdout=payload, stderr="")
+
+    monkeypatch.setattr(op_env.subprocess, "run", fake_run)
+
+    results = op_env.check_op_item_scaffold(["OPENAI_API_KEY"])
+
+    assert results[-1].name == "OPENAI_API_KEY"
+    assert results[-1].ok is False
+    assert results[-1].detail == "duplicate field"
