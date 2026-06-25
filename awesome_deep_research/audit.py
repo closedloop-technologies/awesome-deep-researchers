@@ -111,6 +111,25 @@ def check_provider_skills() -> AuditResult:
     return AuditResult("provider skill docs", ok, "missing: " + ", ".join(missing) if missing else "all present")
 
 
+def check_mirrored_skill_directories() -> AuditResult:
+    agents_skills = {
+        path.name for path in (REPO_ROOT / ".agents" / "skills").iterdir() if path.is_dir()
+    }
+    packaged_skills = {path.name for path in (REPO_ROOT / "skills").iterdir() if path.is_dir()}
+    missing_from_agents = sorted(packaged_skills - agents_skills)
+    missing_from_package = sorted(agents_skills - packaged_skills)
+    failures = []
+    if missing_from_agents:
+        failures.append("missing from .agents/skills: " + ", ".join(missing_from_agents))
+    if missing_from_package:
+        failures.append("missing from skills: " + ", ".join(missing_from_package))
+    return AuditResult(
+        "mirrored skill directories",
+        not failures,
+        "; ".join(failures) if failures else "skill directory sets match",
+    )
+
+
 def check_provider_skill_commands() -> AuditResult:
     missing = []
     for skill_name in sorted(REQUIRED_OP_EXAMPLE_SKILLS):
@@ -334,6 +353,7 @@ def run_audit() -> List[AuditResult]:
     return [
         check_plugin_manifest(),
         check_provider_skills(),
+        check_mirrored_skill_directories(),
         check_provider_skill_commands(),
         check_agents_runnable_skills(),
         check_env_template(),
