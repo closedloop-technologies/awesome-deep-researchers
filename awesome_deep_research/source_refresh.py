@@ -61,11 +61,21 @@ def normalized_skill_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-")
 
 
+def has_encoded_control_character(value: str) -> bool:
+    decoded = unquote(value)
+    return any(ord(character) < 32 or ord(character) == 127 for character in decoded)
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain whitespace",
+        )
+    if has_encoded_control_character(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain encoded control characters",
         )
     parsed = urlparse(entry.source)
     if parsed.scheme == "http":
@@ -250,6 +260,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain whitespace",
+        )
+    if has_encoded_control_character(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain encoded control characters",
         )
 
     parsed = urlparse(entry.source)
