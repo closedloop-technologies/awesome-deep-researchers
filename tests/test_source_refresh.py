@@ -27,6 +27,10 @@ def test_parse_refreshed_date_reads_iso_date():
     )
 
 
+def test_parse_refreshed_date_rejects_invalid_iso_date():
+    assert source_refresh.parse_refreshed_date("Last refreshed: 2026-99-99.") is None
+
+
 def test_source_index_checker_passes_current_index():
     results = source_refresh.check_source_index(today=date(2026, 6, 23))
 

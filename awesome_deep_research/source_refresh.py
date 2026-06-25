@@ -36,7 +36,10 @@ def parse_refreshed_date(text: str) -> date | None:
     match = DATE_RE.search(text)
     if not match:
         return None
-    return date.fromisoformat(match.group(1))
+    try:
+        return date.fromisoformat(match.group(1))
+    except ValueError:
+        return None
 
 
 def parse_source_entries(text: str) -> List[SourceEntry]:
