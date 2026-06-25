@@ -76,6 +76,13 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         )
     if parsed.scheme in {"http", "https"} and not parsed.netloc:
         return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
+    if parsed.scheme in {"http", "https"} and (
+        parsed.username is not None or parsed.password is not None
+    ):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not include credentials",
+        )
     if not parsed.scheme and parsed.query:
         return CheckResult(
             False,
