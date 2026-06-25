@@ -161,7 +161,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         local_path.relative_to(repo_root.resolve())
     except ValueError:
         return CheckResult(False, f"{entry.skill}: {entry.source} escapes repo root")
-    return CheckResult(local_path.exists(), f"{entry.skill}: {entry.source} local path")
+    if not local_path.exists():
+        return CheckResult(False, f"{entry.skill}: {entry.source} local path missing")
+    if not local_path.is_file():
+        return CheckResult(False, f"{entry.skill}: {entry.source} local path must be a file")
+    return CheckResult(True, f"{entry.skill}: {entry.source} local path")
 
 
 def check_links(index_path: Path = DEFAULT_INDEX) -> List[CheckResult]:

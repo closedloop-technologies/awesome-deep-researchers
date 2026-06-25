@@ -272,3 +272,16 @@ def test_source_link_rejects_unsupported_url_schemes(tmp_path):
 
     assert result.ok is False
     assert "unsupported URL scheme" in result.message
+
+
+def test_local_source_link_rejects_directory_sources(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local path must be a file" in result.message
