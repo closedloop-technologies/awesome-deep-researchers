@@ -102,6 +102,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} host must not end with a dot",
         )
+    if parsed.scheme in {"http", "https"} and ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not encode path separators",
+        )
     if has_remote_parent_directory_reference(entry.source):
         return CheckResult(
             False,
@@ -297,6 +302,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} host must not end with a dot",
+            )
+        if ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not encode path separators",
             )
         if has_remote_parent_directory_reference(entry.source):
             return CheckResult(
