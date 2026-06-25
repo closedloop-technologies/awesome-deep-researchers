@@ -262,3 +262,13 @@ def test_local_source_link_rejects_absolute_path_outside_repo(tmp_path):
 
     assert result.ok is False
     assert "escapes repo root" in result.message
+
+
+def test_source_link_rejects_unsupported_url_schemes(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "ftp://example.com/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "unsupported URL scheme" in result.message

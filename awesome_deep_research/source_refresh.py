@@ -153,6 +153,8 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(False, f"{entry.skill}: {entry.source} failed: {exc}")
         ok = 200 <= response.status_code < 400
         return CheckResult(ok, f"{entry.skill}: {entry.source} HTTP {response.status_code}")
+    if parsed.scheme:
+        return CheckResult(False, f"{entry.skill}: {entry.source} has unsupported URL scheme")
 
     local_path = (repo_root / entry.source).resolve()
     try:
