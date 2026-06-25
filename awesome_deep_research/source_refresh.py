@@ -57,6 +57,11 @@ def expected_skill_names(skills_root: Path = SKILLS_ROOT) -> List[str]:
 
 
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
+    if any(character.isspace() for character in entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain whitespace",
+        )
     parsed = urlparse(entry.source)
     if parsed.scheme and parsed.scheme not in {"http", "https"}:
         return CheckResult(
