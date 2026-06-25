@@ -182,8 +182,10 @@ def list_prompts_command(_: argparse.Namespace) -> int:
 
 
 def resolve_prompt_text(prompt_id: Optional[str], prompt_text: Optional[str]) -> PromptExample:
-    if prompt_text:
-        return PromptExample(identifier="custom", category="Custom", text=prompt_text)
+    if prompt_text is not None:
+        if not prompt_text.strip():
+            raise ValueError("--prompt-text must be a non-empty string.")
+        return PromptExample(identifier="custom", category="Custom", text=prompt_text.strip())
 
     if not prompt_id:
         raise ValueError("Either --prompt-id or --prompt-text must be provided.")

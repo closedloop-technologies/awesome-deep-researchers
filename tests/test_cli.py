@@ -88,6 +88,19 @@ def test_build_user_prompt_includes_extra_instructions():
     assert re.search(r"Domain Mapping", user_prompt)
 
 
+def test_resolve_prompt_text_rejects_blank_custom_prompts():
+    with pytest.raises(ValueError, match="--prompt-text must be a non-empty string"):
+        cli.resolve_prompt_text(None, "   ")
+
+
+def test_resolve_prompt_text_trims_custom_prompts():
+    prompt = cli.resolve_prompt_text(None, "  Analyze this corpus.  ")
+
+    assert prompt.identifier == "custom"
+    assert prompt.category == "Custom"
+    assert prompt.text == "Analyze this corpus."
+
+
 @pytest.mark.parametrize("mode", ["default", "relative", "absolute"])
 def test_ensure_output_dir_creates_directories(tmp_path: Path, monkeypatch, mode: str):
     monkeypatch.setattr(cli, "DEFAULT_OUTPUT_DIR", tmp_path / "default")
