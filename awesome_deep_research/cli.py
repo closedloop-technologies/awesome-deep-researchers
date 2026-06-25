@@ -264,12 +264,18 @@ def build_user_prompt(prompt: PromptExample, extra: Optional[str]) -> str:
 
 
 def ensure_output_dir(path: Optional[str]) -> Path:
-    if path:
-        output_dir = Path(path)
-        if not output_dir.is_absolute():
-            output_dir = REPO_ROOT / output_dir
+    if path is not None:
+        if not path.strip():
+            raise ValueError("--output-dir must be a non-empty path.")
+        requested_dir = Path(path)
+        output_dir = requested_dir if requested_dir.is_absolute() else REPO_ROOT / requested_dir
     else:
         output_dir = DEFAULT_OUTPUT_DIR
+    output_dir = output_dir.resolve()
+    try:
+        output_dir.relative_to(REPO_ROOT.resolve())
+    except ValueError as exc:
+        raise ValueError("--output-dir must stay within the repository root.") from exc
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
 
@@ -298,6 +304,11 @@ def run_command(args: argparse.Namespace) -> int:
     try:
         prompt = resolve_prompt_text(args.prompt_id, args.prompt_text)
     except (ValueError, KeyError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    try:
+        output_dir = ensure_output_dir(args.output_dir)
+    except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
@@ -331,7 +342,6 @@ def run_command(args: argparse.Namespace) -> int:
         print("Claude CLI returned empty output.", file=sys.stderr)
         return 1
 
-    output_dir = ensure_output_dir(args.output_dir)
     output_path = next_output_path(output_dir, args.skill)
     output_path.write_text(output_text + "\n", encoding="utf-8")
 

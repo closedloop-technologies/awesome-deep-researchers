@@ -103,6 +103,7 @@ def test_resolve_prompt_text_trims_custom_prompts():
 
 @pytest.mark.parametrize("mode", ["default", "relative", "absolute"])
 def test_ensure_output_dir_creates_directories(tmp_path: Path, monkeypatch, mode: str):
+    monkeypatch.setattr(cli, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(cli, "DEFAULT_OUTPUT_DIR", tmp_path / "default")
 
     if mode == "default":
@@ -115,3 +116,29 @@ def test_ensure_output_dir_creates_directories(tmp_path: Path, monkeypatch, mode
     output_dir = cli.ensure_output_dir(requested)
     assert output_dir.exists()
     assert output_dir.is_dir()
+
+
+@pytest.mark.parametrize("requested", ["", "   ", "../outside"])
+def test_ensure_output_dir_rejects_invalid_paths(
+    tmp_path: Path, monkeypatch, requested: str
+):
+    monkeypatch.setattr(cli, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(cli, "DEFAULT_OUTPUT_DIR", tmp_path / "default")
+
+    with pytest.raises(ValueError, match="--output-dir"):
+        cli.ensure_output_dir(requested)
+
+    assert not (tmp_path.parent / "outside").exists()
+
+
+def test_ensure_output_dir_rejects_absolute_paths_outside_repo(
+    tmp_path: Path, monkeypatch
+):
+    outside = tmp_path.parent / "outside-output"
+    monkeypatch.setattr(cli, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(cli, "DEFAULT_OUTPUT_DIR", tmp_path / "default")
+
+    with pytest.raises(ValueError, match="--output-dir must stay within"):
+        cli.ensure_output_dir(str(outside))
+
+    assert not outside.exists()
