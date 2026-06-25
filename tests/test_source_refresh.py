@@ -758,3 +758,27 @@ def test_local_source_link_rejects_fragment_only_sources(tmp_path):
 
     assert result.ok is False
     assert "local source must include a path" in result.message
+
+
+def test_local_source_link_rejects_query_parameters(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "source.md").write_text("source", encoding="utf-8")
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source.md?download=1"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not include query parameters" in result.message
+
+
+def test_local_source_link_rejects_backslashes(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs\\source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must use forward slashes" in result.message

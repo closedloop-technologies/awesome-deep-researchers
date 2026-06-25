@@ -256,9 +256,19 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
     if parsed.scheme:
         return CheckResult(False, f"{entry.skill}: {entry.source} has unsupported URL scheme")
 
+    if parsed.query:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not include query parameters",
+        )
     local_source_path = unquote(parsed.path)
     if not local_source_path:
         return CheckResult(False, f"{entry.skill}: {entry.source} local source must include a path")
+    if "\\" in local_source_path:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must use forward slashes",
+        )
     local_path = (repo_root / local_source_path).resolve()
     try:
         local_path.relative_to(repo_root.resolve())
