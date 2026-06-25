@@ -116,6 +116,18 @@ def check_source_index(
                 "duplicate source index rows: " + ", ".join(duplicate_entries),
             )
         )
+    duplicate_sources = sorted(
+        source
+        for source, count in Counter(entry.source for entry in entries if entry.source).items()
+        if count > 1
+    )
+    if duplicate_sources:
+        results.append(
+            CheckResult(
+                False,
+                "duplicate source index sources: " + ", ".join(duplicate_sources),
+            )
+        )
     expected_skills = set(expected_skill_names(index_path.parent))
     invalid_skill_dirs = sorted(
         skill_name for skill_name in expected_skills if not SKILL_NAME_RE.fullmatch(skill_name)
