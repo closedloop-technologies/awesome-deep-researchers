@@ -1,6 +1,8 @@
 from datetime import date
 from math import inf
 
+import pytest
+
 from awesome_deep_research import source_refresh
 
 
@@ -1426,6 +1428,28 @@ def test_local_source_link_rejects_repeated_path_separators(tmp_path):
 
     assert result.ok is False
     assert "local source must not contain repeated separators" in result.message
+
+
+@pytest.mark.parametrize("source", ["docs/.source.md", ".docs/source.md"])
+def test_local_source_link_rejects_hidden_path_components(tmp_path, source):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", source),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain hidden path components" in result.message
+
+
+@pytest.mark.parametrize("source", ["docs/-source.md", "-docs/source.md"])
+def test_local_source_link_rejects_flag_like_path_components(tmp_path, source):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", source),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain flag-like path components" in result.message
 
 
 def test_source_link_rejects_unsupported_url_schemes(tmp_path):
