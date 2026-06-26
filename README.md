@@ -16,6 +16,7 @@ Deep research agents go beyond simple Q&A—they autonomously plan research stra
 - [What Makes an Agent Deep Research](#what-makes-an-agent-deep-research)
 - [Domain-Specific Deep Research](#domain-specific-deep-research)
 - [Codex Plugin and Skills](#codex-plugin-and-skills)
+- [MCP Deep Research Server](#mcp-deep-research-server)
 
 ## Commercial APIs
 
@@ -262,6 +263,32 @@ pip install -r requirements.txt
 ```
 
 For detailed documentation, see each skill's `SKILL.md`.
+
+## MCP Deep Research Server
+
+The v1 application goal is an MCP-first server that turns a human research
+question into an Open Knowledge Format artifact directory. The domain terms and
+boundaries are captured in [`CONTEXT.md`](CONTEXT.md), and the implementation
+goal is in [`GOAL.md`](GOAL.md).
+
+Install the optional MCP dependency and run the server with:
+
+```bash
+pip install "awesome-deep-research[mcp]"
+adr-mcp
+```
+
+The server exposes two tools:
+
+- `list_providers`: returns every supported provider, aliases, access mode,
+  required MCP environment variables, and enabled state.
+- `deep_research`: runs explicitly selected providers in parallel, writes raw
+  provider output, Provider OKF Bundles, an Aggregate OKF Bundle, metadata, and
+  `events.jsonl` under `DEEP_RESEARCH_OUTPUT_ROOT` or
+  `~/.deep-research/outputs`.
+
+Provider API keys, timeout settings, and `DEEP_RESEARCH_OUTPUT_ROOT` belong in
+the MCP server configuration environment, not in request payloads.
 
 ## Headless Agent Skill Runner
 
