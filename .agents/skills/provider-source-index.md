@@ -29,3 +29,4 @@ pricing assumptions, and benchmark cost controls.
 | `deep-research-langchain` | https://github.com/langchain-ai/open_deep_research |
 | `deep-research-stanford-storm` | https://github.com/stanford-oval/storm |
 | `deep-research-smolagents` | https://github.com/huggingface/smolagents |
+| `deep-research-api-calls` | https://arxiv.org/pdf/2507.05495 |

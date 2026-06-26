@@ -10,6 +10,7 @@ Deep research agents go beyond simple Q&A—they autonomously plan research stra
 - [Open Source Frameworks](#open-source-frameworks)
 - [Specialized Research Tools](#specialized-research-tools)
 - [Search & Retrieval Infrastructure](#search--retrieval-infrastructure)
+- [Provider Access Modes](#provider-access-modes)
 - [API Skill and Benchmark Status](#api-skill-and-benchmark-status)
 - [Benchmarks & Evaluation](#benchmarks--evaluation)
 - [What Makes an Agent Deep Research](#what-makes-an-agent-deep-research)
@@ -29,6 +30,7 @@ or model guidance.
 |------|------|---------------------------|--------------|----------|
 | [OpenAI Deep Research](https://openai.com/chatgpt) | API + Web UI | Prefer mini/deep-research models, low effort, concise prompts | reasoning models, autonomous browsing, code execution, multimodal | Strategic analysis, legal research, complex synthesis |
 | [Google Gemini Deep Research](https://gemini.google.com) | Web UI + API | Use grounded low-cost mode for smoke tests; reserve Deep Research Agent for deliberate live runs | Google Search integration, workspace/file grounding, asynchronous agent flow | Corporate intelligence, internal data research |
+| [Perplexity DeepResearch](https://perplexity.ai) | Hosted API/Web | Treat as a proprietary hosted baseline when comparing complete deep-research agents | report generation, web-grounded synthesis, citations | Hosted deep-research benchmarks and human preference comparisons |
 | [Perplexity Sonar](https://perplexity.ai) | API + Web UI | Prefer the lowest Sonar model/search depth that returns citations | Real-time web index, citations, live data | Market research, news synthesis, competitive intelligence |
 | [xAI Grok](https://grok.x.ai) | API + Web UI | Use the lowest-cost model that supports the needed web or X search tools | real-time web/X tools, large context, social/news coverage | Crisis monitoring, social sentiment, finance |
 | [You.com Research](https://you.com) | API + Web UI | Use `research_effort=lite` for smoke tests; avoid high-depth tiers unless budgeted | research reports, source analysis, MCP/API options | Enterprise reports, analyst workflows |
@@ -64,6 +66,7 @@ or model guidance.
 | [AgentRxiv](https://agentrxiv.github.io) | MIT | Python | Collaborative agent knowledge sharing | Experimental |
 | [DR-Tulu](https://allenai.org/blog/dr-tulu) | Permissive | Python | RLAER training, citation optimization | Beats GPT-4 on ScholarQA |
 | [Zilliz DeepSearcher](https://github.com/zilliztech/deep-searcher) | Open Source | Python | Private vector DB research, agentic RAG | Self-hosted |
+| [Simple Deepresearch](https://github.com/cxcscmu/Deep-Research-Comparator) | Research | Python | Prompt-based scaffold that turns an LLM into a search/read/report agent | Baseline used with Gemini 2.5 Flash in Deep Research Comparator |
 | [SPAR](https://github.com/tmgthb/Autonomous-Agents) | Open Source | Python | Scholar paper retrieval, citation-driven | OSS project |
 
 ## Specialized Research Tools
@@ -101,29 +104,40 @@ or model guidance.
 | [Pinecone](https://pinecone.io) | Vector DB | Context caching, RAG |
 | [ChromaDB](https://trychroma.com) | Vector DB | Embeddings storage |
 
+## Provider Access Modes
+
+Use these access modes consistently when adding systems:
+
+| Access Mode | Meaning | Examples |
+| --- | --- | --- |
+| Hosted API/Web | A proprietary or hosted agent endpoint/UI performs the deep-research workflow outside this repo. | OpenAI Deep Research, Gemini Deep Research, Perplexity DeepResearch, You.com Research |
+| API component | A retrieval, search, reader, or model API used inside a larger agent workflow rather than a full report-writing agent by itself. | Tavily Search, Exa Search, Jina Reader/Search |
+| Self-hosted library/framework | Code runs in our environment or container, while model/search providers may still be external APIs. | GPT Researcher, LangChain Open Deep Research, STORM, Smolagents, Simple Deepresearch |
+
 ## API Skill and Benchmark Status
 
-The table below tracks whether this repo has a runnable skill for each API,
-whether the API has a verified live benchmark smoke, and the latest under-`$1`
+The table below tracks access mode, whether this repo has a runnable skill,
+whether it has a verified live benchmark smoke, and the latest under-`$1`
 benchmark cost observed for the canonical `meta-deepresearchers` task. Quality
 is reported as a reproducible structural proxy: OKF bundle validity plus output
 size. It is not a human preference score.
 
-| API / Provider | Env field | Skill | Verified live smoke | Latest cost | Quality proxy |
-| --- | --- | --- | --- | ---: | --- |
-| Gemini grounded research | `GOOGLE_API_KEY`, optional `GOOGLE_CLOUD_PROJECT` | `deep-research-gemini` | Yes, 2026-06-23 | `$0.0034` | OKF valid; 5,679 tokens / 22,587 chars |
-| Perplexity Sonar | `PERPLEXITY_API_KEY` | `deep-research-perplexity` | Yes, 2026-06-23 | `$0.0072` | OKF valid; 2,269 tokens / 8,944 chars |
-| You.com Research | `YOU_API_KEY` | `deep-research-you` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 435 tokens / 1,610 chars |
-| Tavily Search | `TAVILY_API_KEY` | `deep-research-tavily` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 563 tokens / 2,122 chars |
-| Exa Search | `EXA_API_KEY` | `deep-research-exa` | Yes, 2026-06-23 | `$0.0111` | OKF valid; 3,732 tokens / 14,797 chars |
-| Jina Reader/Search | `JINA_API_KEY` | `deep-research-jina` | Yes, 2026-06-23 | `$0.2856` | OKF valid; 95,219 tokens / 380,746 chars |
-| OpenAI Deep Research | `OPENAI_API_KEY` | `deep-research-openai` | Not yet live-smoked in this repo | n/a | Skill and env path present |
-| xAI Grok | `XAI_API_KEY` | `deep-research-xai-grok` | Not yet live-smoked in this repo | n/a | Skill and env path present |
-| You.com Finance Research | `YOU_API_KEY` | `deep-research-you` with `--api finance` | Not in under-`$1` smoke suite | n/a | Domain-specific skill path present |
-| GPT Researcher | `OPENAI_API_KEY`, `TAVILY_API_KEY` | `deep-research-gpt-researcher` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
-| LangChain Open Deep Research | `OPENAI_API_KEY`, optional model/search keys | `deep-research-langchain` | Not yet live-smoked in this repo | n/a | OSS framework skill present; server workflow |
-| Stanford STORM | `OPENAI_API_KEY`, `YDC_API_KEY` or `BING_SEARCH_API_KEY` | `deep-research-stanford-storm` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
-| Smolagents | `OPENAI_API_KEY`, optional `HF_TOKEN` | `deep-research-smolagents` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| API / Provider | Access mode | Env field | Skill | Verified live smoke | Latest cost | Quality proxy |
+| --- | --- | --- | --- | --- | ---: | --- |
+| Gemini grounded research | Hosted API/Web | `GOOGLE_API_KEY`, optional `GOOGLE_CLOUD_PROJECT` | `deep-research-gemini` | Yes, 2026-06-23 | `$0.0034` | OKF valid; 5,679 tokens / 22,587 chars |
+| Perplexity Sonar / DeepResearch | Hosted API/Web | `PERPLEXITY_API_KEY` | `deep-research-perplexity` | Yes, 2026-06-23 | `$0.0072` | OKF valid; 2,269 tokens / 8,944 chars |
+| You.com Research | Hosted API/Web | `YOU_API_KEY` | `deep-research-you` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 435 tokens / 1,610 chars |
+| Tavily Search | API component | `TAVILY_API_KEY` | `deep-research-tavily` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 563 tokens / 2,122 chars |
+| Exa Search | API component | `EXA_API_KEY` | `deep-research-exa` | Yes, 2026-06-23 | `$0.0111` | OKF valid; 3,732 tokens / 14,797 chars |
+| Jina Reader/Search | API component | `JINA_API_KEY` | `deep-research-jina` | Yes, 2026-06-23 | `$0.2856` | OKF valid; 95,219 tokens / 380,746 chars |
+| OpenAI Deep Research | Hosted API/Web | `OPENAI_API_KEY` | `deep-research-openai` | Not yet live-smoked in this repo | n/a | Skill and env path present |
+| xAI Grok | Hosted API/Web | `XAI_API_KEY` | `deep-research-xai-grok` | Not yet live-smoked in this repo | n/a | Skill and env path present |
+| You.com Finance Research | Hosted API/Web | `YOU_API_KEY` | `deep-research-you` with `--api finance` | Not in under-`$1` smoke suite | n/a | Domain-specific skill path present |
+| GPT Researcher | Self-hosted library/framework | `OPENAI_API_KEY`, `TAVILY_API_KEY` | `deep-research-gpt-researcher` | Not yet live-smoked in this repo | n/a | OSS framework skill present; Deep Research Comparator used GPT-4.1, o4-mini, and Serper |
+| LangChain Open Deep Research | Self-hosted library/framework | `OPENAI_API_KEY`, optional model/search keys | `deep-research-langchain` | Not yet live-smoked in this repo | n/a | OSS framework skill present; server workflow |
+| Stanford STORM | Self-hosted library/framework | `OPENAI_API_KEY`, `YDC_API_KEY` or `BING_SEARCH_API_KEY` | `deep-research-stanford-storm` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| Smolagents | Self-hosted library/framework | `OPENAI_API_KEY`, optional `HF_TOKEN` | `deep-research-smolagents` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| Simple Deepresearch | Self-hosted library/framework | model API key plus search API/index | none yet | Not wired | n/a | Research scaffold; Deep Research Comparator reports Gemini 2.5 Flash baseline clarity 89.4 and insight 79.4 |
 
 Live smoke reports are written under `/tmp/adr-live-*-smoke/` during local
 verification. Re-run them with:
