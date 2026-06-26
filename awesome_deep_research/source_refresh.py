@@ -7,6 +7,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Iterable, List, Sequence
 from urllib.parse import unquote, urlparse
@@ -96,6 +97,16 @@ def has_percent_encoded_host(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and "%" in parsed.netloc
 
 
+def has_non_global_ip_host(url: str) -> bool:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return False
+    try:
+        return not ip_address(parsed.hostname).is_global
+    except ValueError:
+        return False
+
+
 def has_valid_url_port(url: str) -> bool:
     try:
         urlparse(url).port
@@ -166,6 +177,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} URL port must be numeric and in range",
+        )
+    if parsed.scheme in {"http", "https"} and has_non_global_ip_host(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} IP host must be globally routable",
         )
     if parsed.scheme in {"http", "https"} and "\\" in entry.source:
         return CheckResult(
@@ -443,6 +459,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} URL port must be numeric and in range",
+            )
+        if has_non_global_ip_host(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} IP host must be globally routable",
             )
         if "\\" in entry.source:
             return CheckResult(
