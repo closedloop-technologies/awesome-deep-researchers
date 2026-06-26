@@ -115,6 +115,10 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://example.com:bad/report") is False
     assert is_safe_http_url("https://localhost/report") is False
     assert is_safe_http_url("https://127.0.0.1/report") is False
+    assert is_safe_http_url("https://2130706433/report") is False
+    assert is_safe_http_url("https://0x7f000001/report") is False
+    assert is_safe_http_url("https://017700000001/report") is False
+    assert is_safe_http_url("https://127.1/report") is False
     assert is_safe_http_url("https://10.0.0.5/report") is False
     assert is_safe_http_url("https://172.16.0.5/report") is False
     assert is_safe_http_url("https://192.168.1.5/report") is False

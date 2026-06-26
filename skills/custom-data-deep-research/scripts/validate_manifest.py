@@ -7,6 +7,7 @@ import argparse
 import ipaddress
 import json
 import re
+import socket
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -45,6 +46,17 @@ URL_FIELDS_BY_TYPE = {
     "ticket": ("url",),
 }
 MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+
+
+def parse_legacy_ipv4_address(hostname: str) -> ipaddress.IPv4Address | None:
+    try:
+        packed_address = socket.inet_aton(hostname)
+    except OSError:
+        return None
+    try:
+        return ipaddress.IPv4Address(packed_address)
+    except ipaddress.AddressValueError:
+        return None
 
 
 def is_safe_relative_path(value: str) -> bool:
@@ -109,7 +121,7 @@ def is_safe_http_url(value: Any) -> bool:
     try:
         host_ip = ipaddress.ip_address(hostname)
     except ValueError:
-        host_ip = None
+        host_ip = parse_legacy_ipv4_address(hostname)
     if host_ip is not None and (
         host_ip.is_private
         or host_ip.is_loopback
