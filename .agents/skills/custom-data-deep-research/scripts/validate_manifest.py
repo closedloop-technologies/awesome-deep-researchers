@@ -95,6 +95,10 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if not parsed.hostname:
         return False
+    try:
+        parsed.port
+    except ValueError:
+        return False
     if parsed.username is not None or parsed.password is not None:
         return False
     hostname = parsed.hostname.lower()
