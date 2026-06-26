@@ -358,6 +358,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             False,
             f"{entry.skill}: {entry.source} must not contain encoded whitespace",
         )
+    if has_malformed_percent_encoding(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain malformed percent encoding",
+        )
     if has_encoded_control_character(entry.source):
         return CheckResult(
             False,

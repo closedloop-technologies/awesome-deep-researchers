@@ -1287,6 +1287,23 @@ def test_source_link_rejects_encoded_whitespace_before_request(monkeypatch, tmp_
     assert "must not contain encoded whitespace" in result.message
 
 
+def test_source_link_rejects_malformed_percent_encoding_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/source%.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not contain malformed percent encoding" in result.message
+
+
 def test_source_link_rejects_remote_backslash_paths_before_request(monkeypatch, tmp_path):
     def fail_request(*_args, **_kwargs):
         raise AssertionError("HTTP request should not run")
@@ -1403,3 +1420,13 @@ def test_local_source_link_rejects_encoded_whitespace(tmp_path):
 
     assert result.ok is False
     assert "must not contain encoded whitespace" in result.message
+
+
+def test_local_source_link_rejects_malformed_percent_encoding(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source%.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not contain malformed percent encoding" in result.message
