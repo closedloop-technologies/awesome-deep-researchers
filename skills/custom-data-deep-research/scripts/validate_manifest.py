@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import sys
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import unquote, urlsplit
@@ -111,6 +112,13 @@ def is_safe_http_url(value: Any) -> bool:
         or hostname == "::1"
     ):
         return False
+    try:
+        address = ip_address(hostname)
+    except ValueError:
+        pass
+    else:
+        if not address.is_global:
+            return False
     return True
 
 
