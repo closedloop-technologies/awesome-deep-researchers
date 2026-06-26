@@ -89,6 +89,8 @@ def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("../report.pdf") is False
     assert is_safe_relative_path("docs/../report.pdf") is False
     assert is_safe_relative_path("./report.pdf") is False
+    assert is_safe_relative_path("docs\\report.pdf") is False
+    assert is_safe_relative_path("docs/report\x7f.pdf") is False
 
 
 def test_safe_http_url_requires_absolute_http_url_without_credentials():
@@ -129,6 +131,17 @@ def test_s3_key_must_be_safe_relative_path():
 
     errors = validate_manifest(manifest)
 
+    assert any("s3-1: key must be a safe relative path" in error for error in errors)
+
+
+def test_manifest_paths_reject_backslashes_and_control_characters():
+    manifest = valid_manifest()
+    manifest["sources"][2]["path"] = "docs\\report.pdf"
+    manifest["sources"][3]["key"] = "prefix/object\x7f.json"
+
+    errors = validate_manifest(manifest)
+
+    assert any("local-1: path must be a safe relative path" in error for error in errors)
     assert any("s3-1: key must be a safe relative path" in error for error in errors)
 
 
