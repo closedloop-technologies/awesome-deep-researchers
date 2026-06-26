@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import sys
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import unquote, urlsplit
@@ -102,6 +103,11 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if "%" in parsed.netloc.rsplit("@", 1)[-1].split(":", 1)[0]:
         return False
+    try:
+        if not ip_address(hostname).is_global:
+            return False
+    except ValueError:
+        pass
     if (
         hostname == "localhost"
         or hostname.endswith(".localhost")
