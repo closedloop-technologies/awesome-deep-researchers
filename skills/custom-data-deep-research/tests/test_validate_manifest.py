@@ -140,6 +140,7 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://bad-.example/report") is False
     assert is_safe_http_url("https://bad..example/report") is False
     assert is_safe_http_url("https://example/report") is False
+    assert is_safe_http_url("https://example.123/report") is False
     assert is_safe_http_url(" https://example.com/report") is False
 
 
@@ -156,6 +157,7 @@ def test_has_valid_hostname_syntax_rejects_malformed_dns_labels():
     assert has_valid_hostname_syntax("bad-.example") is False
     assert has_valid_hostname_syntax("bad..example") is False
     assert has_valid_hostname_syntax("example") is False
+    assert has_valid_hostname_syntax("example.123") is False
 
 
 def test_local_and_csv_paths_must_be_safe_relative_paths():
