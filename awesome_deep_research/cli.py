@@ -8,11 +8,14 @@ import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
+from urllib.parse import unquote
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_ROOT = REPO_ROOT / ".agents" / "skills"
 PROMPT_FILE = REPO_ROOT / "docs" / "taxonomy-and-examples.md"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs"
+ENCODED_PATH_SEPARATOR_RE = re.compile(r"%2f|%5c", re.IGNORECASE)
+MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 
 
 @dataclass
@@ -269,6 +272,13 @@ def ensure_output_dir(path: Optional[str]) -> Path:
             raise ValueError("--output-dir must be a non-empty path.")
         if path != path.strip():
             raise ValueError("--output-dir must be trimmed.")
+        if MALFORMED_PERCENT_ENCODING_RE.search(path):
+            raise ValueError("--output-dir must not contain malformed percent encoding.")
+        if ENCODED_PATH_SEPARATOR_RE.search(path):
+            raise ValueError("--output-dir must not encode path separators.")
+        decoded_path = unquote(path)
+        if decoded_path != path:
+            raise ValueError("--output-dir must not contain percent-encoded aliases.")
         if "\\" in path:
             raise ValueError("--output-dir must use forward slashes.")
         if any(ord(character) < 32 or ord(character) == 127 for character in path):
