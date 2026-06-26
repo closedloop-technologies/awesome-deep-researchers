@@ -104,6 +104,10 @@ def has_repeated_path_separator(value: str) -> bool:
     return "//" in value
 
 
+def has_percent_encoded_path_alias(value: str) -> bool:
+    return unquote(value) != value
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
@@ -170,6 +174,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} URL path must not contain current directory references",
         )
+    if parsed.scheme in {"http", "https"} and has_percent_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not contain percent-encoded aliases",
+        )
     if parsed.scheme in {"http", "https"} and (
         parsed.username is not None or parsed.password is not None
     ):
@@ -217,6 +226,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain current directory references",
+        )
+    if not parsed.scheme and has_percent_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain percent-encoded aliases",
         )
     return None
 
@@ -420,6 +434,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} URL path must not contain current directory references",
             )
+        if has_percent_encoded_path_alias(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not contain percent-encoded aliases",
+            )
         if parsed.username is not None or parsed.password is not None:
             return CheckResult(
                 False,
@@ -473,6 +492,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain current directory references",
+        )
+    if has_percent_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain percent-encoded aliases",
         )
     local_path = (repo_root / local_source_path).resolve()
     try:
