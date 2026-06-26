@@ -105,6 +105,21 @@ def is_safe_relative_path(value: str) -> bool:
     )
 
 
+def has_decoded_control_character(value: str) -> bool:
+    decoded_value = value
+    for _ in range(3):
+        previous_value = decoded_value
+        try:
+            decoded_value = unquote(previous_value, errors="strict")
+        except UnicodeDecodeError:
+            return True
+        if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
+            return True
+        if decoded_value == previous_value:
+            return False
+    return False
+
+
 def is_safe_http_url(value: Any) -> bool:
     if not isinstance(value, str) or not value.strip():
         return False
@@ -116,12 +131,9 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if MALFORMED_PERCENT_ENCODING_RE.search(value):
         return False
-    try:
-        decoded_value = unquote(value, errors="strict")
-    except UnicodeDecodeError:
+    if has_decoded_control_character(value):
         return False
-    if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
-        return False
+    decoded_value = unquote(value, errors="strict")
     if any(character.isspace() for character in decoded_value):
         return False
     try:

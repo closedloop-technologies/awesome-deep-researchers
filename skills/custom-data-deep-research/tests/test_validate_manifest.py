@@ -119,6 +119,7 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://example.com/report\nnext") is False
     assert is_safe_http_url("https://example.com/bad%20path") is False
     assert is_safe_http_url("https://example.com/bad%7fpath") is False
+    assert is_safe_http_url("https://example.com/search?q=%2500") is False
     assert is_safe_http_url("https://example.com/report%2epdf") is False
     assert is_safe_http_url("https://example.com/reports%2f2026") is False
     assert is_safe_http_url("https://example.com/bad%zzpath") is False
