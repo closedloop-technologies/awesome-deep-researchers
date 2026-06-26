@@ -67,6 +67,11 @@ def has_encoded_control_character(value: str) -> bool:
     return any(ord(character) < 32 or ord(character) == 127 for character in decoded)
 
 
+def has_encoded_whitespace(value: str) -> bool:
+    decoded = unquote(value)
+    return any(character.isspace() for character in decoded)
+
+
 def has_trailing_host_dot(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and bool(parsed.hostname) and parsed.hostname.endswith(".")
@@ -90,6 +95,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain whitespace",
+        )
+    if has_encoded_whitespace(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain encoded whitespace",
         )
     if has_encoded_control_character(entry.source):
         return CheckResult(
@@ -318,6 +328,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain whitespace",
+        )
+    if has_encoded_whitespace(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain encoded whitespace",
         )
     if has_encoded_control_character(entry.source):
         return CheckResult(
