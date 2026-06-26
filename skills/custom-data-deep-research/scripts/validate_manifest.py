@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 
 SUPPORTED_SOURCE_TYPES = {
@@ -43,15 +44,28 @@ URL_FIELDS_BY_TYPE = {
     "arxiv": ("pdf_url",),
     "ticket": ("url",),
 }
+MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 
 
 def is_safe_relative_path(value: str) -> bool:
+    if MALFORMED_PERCENT_ENCODING_RE.search(value):
+        return False
     if "\\" in value:
         return False
     if any(ord(character) < 32 or ord(character) == 127 for character in value):
         return False
-    return not Path(value).is_absolute() and all(
-        part not in {"", ".", ".."} for part in value.split("/")
+    try:
+        decoded_value = unquote(value, errors="strict")
+    except UnicodeDecodeError:
+        return False
+    if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
+        return False
+    if "\\" in decoded_value:
+        return False
+    if decoded_value.split("/") != value.split("/"):
+        return False
+    return not Path(decoded_value).is_absolute() and all(
+        part not in {"", ".", ".."} for part in decoded_value.split("/")
     )
 
 
