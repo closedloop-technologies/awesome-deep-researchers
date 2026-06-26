@@ -341,6 +341,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} URL path must not contain parent directory references",
             )
+        if has_current_directory_reference(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not contain current directory references",
+            )
         if parsed.username is not None or parsed.password is not None:
             return CheckResult(
                 False,

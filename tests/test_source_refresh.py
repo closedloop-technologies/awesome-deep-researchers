@@ -1046,6 +1046,23 @@ def test_source_link_rejects_remote_encoded_path_separators_before_request(
     assert "URL path must not encode path separators" in result.message
 
 
+def test_source_link_rejects_remote_current_directory_paths_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/%2e/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL path must not contain current directory references" in result.message
+
+
 def test_source_link_rejects_whitespace_urls_before_request(monkeypatch, tmp_path):
     def fail_request(*_args, **_kwargs):
         raise AssertionError("HTTP request should not run")
