@@ -95,6 +95,8 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if not parsed.hostname:
         return False
+    if unquote(parsed.path, errors="strict") != parsed.path:
+        return False
     try:
         parsed.port
     except ValueError:
