@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import unquote, urlsplit
-
 
 SUPPORTED_SOURCE_TYPES = {
     "google_drive",
@@ -103,6 +103,18 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     hostname = parsed.hostname.lower()
     if hostname.endswith("."):
+        return False
+    try:
+        host_ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        host_ip = None
+    if host_ip is not None and (
+        host_ip.is_private
+        or host_ip.is_loopback
+        or host_ip.is_link_local
+        or host_ip.is_multicast
+        or host_ip.is_unspecified
+    ):
         return False
     if "%" in parsed.netloc.rsplit("@", 1)[-1].split(":", 1)[0]:
         return False
