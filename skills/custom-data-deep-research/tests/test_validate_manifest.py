@@ -90,6 +90,8 @@ def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("docs/../report.pdf") is False
     assert is_safe_relative_path("./report.pdf") is False
     assert is_safe_relative_path("docs\\report.pdf") is False
+    assert is_safe_relative_path("docs/my report.pdf") is False
+    assert is_safe_relative_path("docs/report\tcopy.pdf") is False
     assert is_safe_relative_path("docs/report\x7f.pdf") is False
     assert is_safe_relative_path("docs/%2e%2e/report.pdf") is False
     assert is_safe_relative_path("docs%2freport.pdf") is False
@@ -154,6 +156,29 @@ def test_manifest_paths_reject_backslashes_and_control_characters():
 
     assert any("local-1: path must be a safe relative path" in error for error in errors)
     assert any("s3-1: key must be a safe relative path" in error for error in errors)
+
+
+def test_manifest_paths_reject_raw_whitespace():
+    manifest = valid_manifest()
+    manifest["sources"][2]["path"] = "docs/private report.pdf"
+    manifest["sources"][3]["key"] = "prefix/object copy.json"
+    manifest["sources"].append(
+        {
+            "source_id": "csv-1",
+            "source_type": "csv",
+            "title": "Rows",
+            "citation_anchor": "row id",
+            "path": "exports/rows\tcopy.csv",
+            "sha256": "abc",
+            "schema": {"id": "string"},
+        }
+    )
+
+    errors = validate_manifest(manifest)
+
+    assert any("local-1: path must be a safe relative path" in error for error in errors)
+    assert any("s3-1: key must be a safe relative path" in error for error in errors)
+    assert any("csv-1: path must be a safe relative path" in error for error in errors)
 
 
 def test_manifest_paths_reject_encoded_traversal_and_separators():
