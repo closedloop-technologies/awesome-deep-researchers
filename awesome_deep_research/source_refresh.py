@@ -390,6 +390,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             False,
             f"{entry.skill}: {entry.source} must not contain parent directory references",
         )
+    if has_current_directory_reference(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain current directory references",
+        )
     local_path = (repo_root / local_source_path).resolve()
     try:
         local_path.relative_to(repo_root.resolve())
