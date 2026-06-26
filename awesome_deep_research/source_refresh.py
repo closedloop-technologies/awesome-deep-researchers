@@ -150,10 +150,10 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} host must not end with a dot",
         )
-    if parsed.scheme in {"http", "https"} and "\\" in parsed.path:
+    if parsed.scheme in {"http", "https"} and "\\" in entry.source:
         return CheckResult(
             False,
-            f"{entry.skill}: {entry.source} URL path must use forward slashes",
+            f"{entry.skill}: {entry.source} URL must use forward slashes",
         )
     if parsed.scheme in {"http", "https"} and has_repeated_path_separator(parsed.path):
         return CheckResult(
@@ -412,10 +412,10 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} host must not end with a dot",
             )
-        if "\\" in parsed.path:
+        if "\\" in entry.source:
             return CheckResult(
                 False,
-                f"{entry.skill}: {entry.source} URL path must use forward slashes",
+                f"{entry.skill}: {entry.source} URL must use forward slashes",
             )
         if has_repeated_path_separator(parsed.path):
             return CheckResult(
