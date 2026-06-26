@@ -96,6 +96,7 @@ def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("docs/%2e%2e/report.pdf") is False
     assert is_safe_relative_path("docs%2freport.pdf") is False
     assert is_safe_relative_path("docs%5creport.pdf") is False
+    assert is_safe_relative_path("docs/report%2epdf") is False
     assert is_safe_relative_path("docs/report%zz.pdf") is False
 
 
@@ -186,10 +187,10 @@ def test_manifest_paths_reject_raw_whitespace():
     assert any("csv-1: path must be a safe relative path" in error for error in errors)
 
 
-def test_manifest_paths_reject_encoded_traversal_and_separators():
+def test_manifest_paths_reject_encoded_aliases():
     manifest = valid_manifest()
-    manifest["sources"][2]["path"] = "docs/%2e%2e/report.pdf"
-    manifest["sources"][3]["key"] = "prefix%2fobject.json"
+    manifest["sources"][2]["path"] = "docs/report%2epdf"
+    manifest["sources"][3]["key"] = "prefix/object%2ejson"
 
     errors = validate_manifest(manifest)
 

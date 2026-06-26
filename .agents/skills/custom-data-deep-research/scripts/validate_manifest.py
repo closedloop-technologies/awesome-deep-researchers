@@ -61,6 +61,8 @@ def is_safe_relative_path(value: str) -> bool:
         decoded_value = unquote(value, errors="strict")
     except UnicodeDecodeError:
         return False
+    if decoded_value != value:
+        return False
     if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
         return False
     if "\\" in decoded_value:
