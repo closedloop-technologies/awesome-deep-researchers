@@ -7,6 +7,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Iterable, List, Sequence
 from urllib.parse import unquote, urlparse
@@ -22,6 +23,7 @@ ROW_RE = re.compile(r"^\|\s*`([^`]*)`\s*\|\s*([^|]*?)\s*\|", re.MULTILINE)
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 ENCODED_PATH_SEPARATOR_RE = re.compile(r"%2f|%5c", re.IGNORECASE)
 MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+DNS_LABEL_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$", re.IGNORECASE)
 
 
 @dataclass
@@ -63,14 +65,42 @@ def normalized_skill_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-")
 
 
+def fully_unquote(value: str) -> str:
+    decoded = value
+    for _ in range(5):
+        next_value = unquote(decoded)
+        if next_value == decoded:
+            return decoded
+        decoded = next_value
+    return decoded
+
+
 def has_encoded_control_character(value: str) -> bool:
-    decoded = unquote(value)
+    decoded = fully_unquote(value)
     return any(ord(character) < 32 or ord(character) == 127 for character in decoded)
 
 
 def has_encoded_whitespace(value: str) -> bool:
-    decoded = unquote(value)
+    decoded = fully_unquote(value)
     return any(character.isspace() for character in decoded)
+
+
+def has_encoded_query_or_fragment_marker(value: str) -> bool:
+    decoded = fully_unquote(value)
+    return decoded != value and ("?" in decoded or "#" in decoded)
+
+
+def has_encoded_path_separator(value: str) -> bool:
+    decoded = fully_unquote(value)
+    return (
+        bool(ENCODED_PATH_SEPARATOR_RE.search(value))
+        or ("\\" in decoded and "\\" not in value)
+        or len(decoded.split("/")) != len(value.split("/"))
+    )
+
+
+def has_encoded_path_alias(value: str) -> bool:
+    return unquote(value) != value
 
 
 def has_malformed_percent_encoding(value: str) -> bool:
@@ -87,13 +117,53 @@ def has_percent_encoded_host(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and "%" in parsed.netloc
 
 
+def has_non_global_ip_host(url: str) -> bool:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return False
+    try:
+        return not ip_address(parsed.hostname).is_global
+    except ValueError:
+        return False
+
+
+def has_valid_dns_hostname(hostname: str) -> bool:
+    try:
+        ip_address(hostname)
+        return True
+    except ValueError:
+        pass
+
+    if len(hostname) > 253:
+        return False
+    labels = hostname.split(".")
+    if len(labels) < 2 or labels[-1].isdigit():
+        return False
+    return all(DNS_LABEL_RE.fullmatch(label) for label in labels)
+
+
+def has_valid_url_port(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+        port = parsed.port
+    except ValueError:
+        return False
+    if parsed.netloc.rsplit("@", 1)[-1].endswith(":"):
+        return False
+    if port == 0:
+        return False
+    return True
+
+
 def has_remote_parent_directory_reference(url: str) -> bool:
     parsed = urlparse(url)
-    return parsed.scheme in {"http", "https"} and ".." in Path(unquote(parsed.path)).parts
+    return parsed.scheme in {"http", "https"} and ".." in Path(
+        fully_unquote(parsed.path)
+    ).parts
 
 
 def decoded_path_segments(value: str) -> list[str]:
-    return unquote(value).split("/")
+    return fully_unquote(value).split("/")
 
 
 def has_current_directory_reference(value: str) -> bool:
@@ -102,6 +172,15 @@ def has_current_directory_reference(value: str) -> bool:
 
 def has_repeated_path_separator(value: str) -> bool:
     return "//" in value
+
+
+def has_symlink_path_component(repo_root: Path, relative_path: Path) -> bool:
+    current = repo_root
+    for part in relative_path.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
 
 
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
@@ -125,7 +204,10 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} must not contain encoded control characters",
         )
-    parsed = urlparse(entry.source)
+    try:
+        parsed = urlparse(entry.source)
+    except ValueError:
+        return CheckResult(False, f"{entry.skill}: {entry.source} must be a valid URL")
     if parsed.scheme == "http":
         return CheckResult(False, f"{entry.skill}: {entry.source} must use HTTPS")
     if parsed.scheme and parsed.scheme not in {"http", "https"}:
@@ -145,20 +227,44 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} host must not end with a dot",
         )
-    if parsed.scheme in {"http", "https"} and "\\" in parsed.path:
+    if parsed.scheme in {"http", "https"} and "\\" in entry.source:
         return CheckResult(
             False,
-            f"{entry.skill}: {entry.source} URL path must use forward slashes",
+            f"{entry.skill}: {entry.source} URL must use forward slashes",
+        )
+    if parsed.scheme in {"http", "https"} and parsed.hostname and not has_valid_dns_hostname(
+        parsed.hostname
+    ):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} host must be a valid DNS name or IP address",
+        )
+    if parsed.scheme in {"http", "https"} and not has_valid_url_port(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL port must be numeric and in range",
+        )
+    if parsed.scheme in {"http", "https"} and has_non_global_ip_host(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} IP host must be globally routable",
         )
     if parsed.scheme in {"http", "https"} and has_repeated_path_separator(parsed.path):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} URL path must not contain repeated separators",
         )
-    if parsed.scheme in {"http", "https"} and ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+    if parsed.scheme in {"http", "https"} and has_encoded_path_separator(parsed.path):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} URL path must not encode path separators",
+        )
+    if parsed.scheme in {"http", "https"} and has_encoded_query_or_fragment_marker(
+        parsed.path
+    ):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not encode query or fragment markers",
         )
     if has_remote_parent_directory_reference(entry.source):
         return CheckResult(
@@ -169,6 +275,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} URL path must not contain current directory references",
+        )
+    if parsed.scheme in {"http", "https"} and has_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not contain percent-encoded aliases",
         )
     if parsed.scheme in {"http", "https"} and (
         parsed.username is not None or parsed.password is not None
@@ -182,12 +293,17 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} local source must not include query parameters",
         )
-    if not parsed.scheme and ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+    if not parsed.scheme and has_encoded_path_separator(parsed.path):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not encode path separators",
         )
-    local_path = unquote(parsed.path) if not parsed.scheme else entry.source
+    if not parsed.scheme and has_encoded_query_or_fragment_marker(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not encode query or fragment markers",
+        )
+    local_path = fully_unquote(parsed.path) if not parsed.scheme else entry.source
     if not parsed.scheme and not local_path:
         return CheckResult(
             False,
@@ -217,6 +333,21 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain current directory references",
+        )
+    if not parsed.scheme and any(part.startswith(".") for part in Path(local_path).parts):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain hidden path components",
+        )
+    if not parsed.scheme and any(part.startswith("-") for part in Path(local_path).parts):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain flag-like path components",
+        )
+    if not parsed.scheme and has_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain percent-encoded aliases",
         )
     return None
 
@@ -379,7 +510,10 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             f"{entry.skill}: {entry.source} must not contain encoded control characters",
         )
 
-    parsed = urlparse(entry.source)
+    try:
+        parsed = urlparse(entry.source)
+    except ValueError:
+        return CheckResult(False, f"{entry.skill}: {entry.source} must be a valid URL")
     if parsed.scheme in {"http", "https"}:
         if parsed.scheme == "http":
             return CheckResult(False, f"{entry.skill}: {entry.source} must use HTTPS")
@@ -395,20 +529,40 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} host must not end with a dot",
             )
-        if "\\" in parsed.path:
+        if "\\" in entry.source:
             return CheckResult(
                 False,
-                f"{entry.skill}: {entry.source} URL path must use forward slashes",
+                f"{entry.skill}: {entry.source} URL must use forward slashes",
+            )
+        if parsed.hostname and not has_valid_dns_hostname(parsed.hostname):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} host must be a valid DNS name or IP address",
+            )
+        if not has_valid_url_port(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL port must be numeric and in range",
+            )
+        if has_non_global_ip_host(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} IP host must be globally routable",
             )
         if has_repeated_path_separator(parsed.path):
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} URL path must not contain repeated separators",
             )
-        if ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+        if has_encoded_path_separator(parsed.path):
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} URL path must not encode path separators",
+            )
+        if has_encoded_query_or_fragment_marker(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not encode query or fragment markers",
             )
         if has_remote_parent_directory_reference(entry.source):
             return CheckResult(
@@ -419,6 +573,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} URL path must not contain current directory references",
+            )
+        if has_encoded_path_alias(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not contain percent-encoded aliases",
             )
         if parsed.username is not None or parsed.password is not None:
             return CheckResult(
@@ -444,12 +603,17 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             False,
             f"{entry.skill}: {entry.source} local source must not include query parameters",
         )
-    if ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+    if has_encoded_path_separator(parsed.path):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not encode path separators",
         )
-    local_source_path = unquote(parsed.path)
+    if has_encoded_query_or_fragment_marker(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not encode query or fragment markers",
+        )
+    local_source_path = fully_unquote(parsed.path)
     if not local_source_path:
         return CheckResult(False, f"{entry.skill}: {entry.source} local source must include a path")
     if "\\" in local_source_path:
@@ -473,6 +637,26 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain current directory references",
+        )
+    if any(part.startswith(".") for part in Path(local_source_path).parts):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain hidden path components",
+        )
+    if any(part.startswith("-") for part in Path(local_source_path).parts):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain flag-like path components",
+        )
+    if has_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain percent-encoded aliases",
+        )
+    if has_symlink_path_component(repo_root, Path(local_source_path)):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain symlinks",
         )
     local_path = (repo_root / local_source_path).resolve()
     try:

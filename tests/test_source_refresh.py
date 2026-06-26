@@ -1,6 +1,8 @@
 from datetime import date
 from math import inf
 
+import pytest
+
 from awesome_deep_research import source_refresh
 
 
@@ -408,6 +410,31 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_invalid_bracketed_remote_urls(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://[::1/source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and "example-skill: https://[::1/source.md must be a valid URL" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_plain_http_sources(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -514,6 +541,104 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_invalid_dns_hosts(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+
+    for source in (
+        "https://example_com/source.md",
+        "https://localhost/source.md",
+        "https://example.123/source.md",
+        "https://-example.com/source.md",
+        "https://example-.com/source.md",
+    ):
+        index_path = skills_root / "provider-source-index.md"
+        index_path.write_text(
+            f"""# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | {source} |
+""",
+            encoding="utf-8",
+        )
+
+        results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+        assert any(
+            not result.ok
+            and f"{source} host must be a valid DNS name or IP address" in result.message
+            for result in results
+        ), source_refresh.format_results(results)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "https://example.com:bad/source.md",
+        "https://example.com:0/source.md",
+        "https://example.com:/source.md",
+    ],
+)
+def test_source_index_checker_fails_malformed_remote_ports(tmp_path, source):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        f"""# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | {source} |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            f"example-skill: {source} URL port must be numeric and in range"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_non_global_ip_hosts(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://192.0.2.10/source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://192.0.2.10/source.md "
+            "IP host must be globally routable"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_remote_parent_directory_paths(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -601,6 +726,124 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_remote_nested_encoded_path_separators(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/docs%252Fsource.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/docs%252Fsource.md "
+            "URL path must not encode path separators"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_remote_encoded_query_fragment_markers(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/docs%23source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/docs%23source.md "
+            "URL path must not encode query or fragment markers"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_remote_nested_encoded_query_fragment_markers(
+    tmp_path,
+):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/docs%2523source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/docs%2523source.md "
+            "URL path must not encode query or fragment markers"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_remote_encoded_path_aliases(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/source%41.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/source%41.md "
+            "URL path must not contain percent-encoded aliases"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_remote_backslash_path_separators(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -623,7 +866,36 @@ Last refreshed: 2026-06-23.
         not result.ok
         and (
             "example-skill: https://example.com/docs\\source.md "
-            "URL path must use forward slashes"
+            "URL must use forward slashes"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_remote_backslash_authorities(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com\\source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com\\source.md "
+            "URL must use forward slashes"
         )
         in result.message
         for result in results
@@ -764,6 +1036,23 @@ Last refreshed: 2026-06-23.
         in result.message
         for result in results
     ), source_refresh.format_results(results)
+
+
+def test_link_checker_rejects_remote_encoded_path_aliases_before_http(monkeypatch):
+    def fail_get(*args, **kwargs):
+        raise AssertionError("HTTP should not be requested for encoded path aliases")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_get)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/%68elp"),
+    )
+
+    assert not result.ok
+    assert (
+        result.message
+        == "example-skill: https://example.com/%68elp URL path must not contain percent-encoded aliases"
+    )
 
 
 def test_source_index_checker_fails_absolute_local_source_paths(tmp_path):
@@ -982,6 +1271,123 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_local_source_paths_with_nested_encoded_slashes(
+    tmp_path,
+):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs%252Fsource.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and "example-skill: docs%252Fsource.md local source must not encode path separators"
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_local_source_paths_with_encoded_markers(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs/source%3Fdownload.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: docs/source%3Fdownload.md "
+            "local source must not encode query or fragment markers"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_local_source_paths_with_nested_encoded_markers(
+    tmp_path,
+):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs/source%253Fdownload.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: docs/source%253Fdownload.md "
+            "local source must not encode query or fragment markers"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_local_source_paths_with_encoded_aliases(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs/sourc%65.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: docs/sourc%65.md "
+            "local source must not contain percent-encoded aliases"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_local_source_paths_with_malformed_percent_encoding(
     tmp_path,
 ):
@@ -1175,6 +1581,59 @@ def test_local_source_link_rejects_repeated_path_separators(tmp_path):
     assert "local source must not contain repeated separators" in result.message
 
 
+def test_local_source_link_rejects_symlinked_files(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    target = docs_dir / "target.md"
+    target.write_text("source", encoding="utf-8")
+    (docs_dir / "source.md").symlink_to(target)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain symlinks" in result.message
+
+
+def test_local_source_link_rejects_symlinked_directories(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    linked_dir = tmp_path / "linked-docs"
+    linked_dir.symlink_to(docs_dir, target_is_directory=True)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "linked-docs/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain symlinks" in result.message
+
+
+@pytest.mark.parametrize("source", ["docs/.source.md", ".docs/source.md"])
+def test_local_source_link_rejects_hidden_path_components(tmp_path, source):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", source),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain hidden path components" in result.message
+
+
+@pytest.mark.parametrize("source", ["docs/-source.md", "-docs/source.md"])
+def test_local_source_link_rejects_flag_like_path_components(tmp_path, source):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", source),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain flag-like path components" in result.message
+
+
 def test_source_link_rejects_unsupported_url_schemes(tmp_path):
     result = source_refresh.check_link(
         source_refresh.SourceEntry("example-skill", "ftp://example.com/source.md"),
@@ -1198,6 +1657,21 @@ def test_source_link_rejects_plain_http_before_request(monkeypatch, tmp_path):
 
     assert result.ok is False
     assert "must use HTTPS" in result.message
+
+
+def test_source_link_rejects_invalid_bracketed_urls_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://[::1/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must be a valid URL" in result.message
 
 
 def test_source_link_rejects_invalid_timeout_before_request(monkeypatch, tmp_path):
@@ -1264,6 +1738,66 @@ def test_source_link_rejects_percent_encoded_hosts_before_request(monkeypatch, t
     assert "host must not contain percent encoding" in result.message
 
 
+def test_source_link_rejects_invalid_dns_hosts_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    for source in (
+        "https://example_com/source.md",
+        "https://localhost/source.md",
+        "https://example.123/source.md",
+        "https://-example.com/source.md",
+        "https://example-.com/source.md",
+    ):
+        result = source_refresh.check_link(
+            source_refresh.SourceEntry("example-skill", source),
+            repo_root=tmp_path,
+        )
+
+        assert result.ok is False
+        assert "host must be a valid DNS name or IP address" in result.message
+
+
+def test_source_link_rejects_malformed_remote_ports_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    for source in (
+        "https://example.com:bad/source.md",
+        "https://example.com:0/source.md",
+    ):
+        result = source_refresh.check_link(
+            source_refresh.SourceEntry("example-skill", source),
+            repo_root=tmp_path,
+        )
+
+        assert result.ok is False
+        assert "URL port must be numeric and in range" in result.message
+
+
+def test_source_link_rejects_non_global_ip_hosts_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    for source in (
+        "https://10.0.0.1/source.md",
+        "https://[2001:db8::1]/source.md",
+    ):
+        result = source_refresh.check_link(
+            source_refresh.SourceEntry("example-skill", source),
+            repo_root=tmp_path,
+        )
+
+        assert result.ok is False
+        assert "IP host must be globally routable" in result.message
+
+
 def test_source_link_rejects_remote_encoded_path_separators_before_request(
     monkeypatch, tmp_path
 ):
@@ -1279,6 +1813,57 @@ def test_source_link_rejects_remote_encoded_path_separators_before_request(
 
     assert result.ok is False
     assert "URL path must not encode path separators" in result.message
+
+
+def test_source_link_rejects_remote_nested_encoded_path_separators_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/docs%252Fsource.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL path must not encode path separators" in result.message
+
+
+def test_source_link_rejects_remote_encoded_query_markers_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/docs%3Fsource.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL path must not encode query or fragment markers" in result.message
+
+
+def test_source_link_rejects_remote_nested_encoded_query_markers_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/docs%253Fsource.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL path must not encode query or fragment markers" in result.message
 
 
 def test_source_link_rejects_remote_current_directory_paths_before_request(
@@ -1357,7 +1942,24 @@ def test_source_link_rejects_remote_backslash_paths_before_request(monkeypatch, 
     )
 
     assert result.ok is False
-    assert "URL path must use forward slashes" in result.message
+    assert "URL must use forward slashes" in result.message
+
+
+def test_source_link_rejects_remote_backslash_authorities_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com\\source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL must use forward slashes" in result.message
 
 
 def test_source_link_rejects_remote_repeated_path_separators_before_request(
@@ -1447,6 +2049,50 @@ def test_local_source_link_rejects_encoded_path_separators(tmp_path):
 
     assert result.ok is False
     assert "local source must not encode path separators" in result.message
+
+
+def test_local_source_link_rejects_nested_encoded_path_separators(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs%255Csource.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not encode path separators" in result.message
+
+
+def test_local_source_link_rejects_encoded_fragment_markers(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source%23heading.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not encode query or fragment markers" in result.message
+
+
+def test_local_source_link_rejects_nested_encoded_fragment_markers(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source%2523heading.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not encode query or fragment markers" in result.message
+
+
+def test_local_source_link_rejects_encoded_path_aliases(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "source.md").write_text("source", encoding="utf-8")
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/sourc%65.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain percent-encoded aliases" in result.message
 
 
 def test_local_source_link_rejects_encoded_whitespace(tmp_path):

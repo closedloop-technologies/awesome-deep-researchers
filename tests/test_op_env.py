@@ -54,6 +54,23 @@ def test_env_file_rejects_whitespace_in_op_references(tmp_path: Path):
     assert results[0].detail == "not an op:// reference"
 
 
+def test_env_file_rejects_encoded_op_reference_aliases(tmp_path: Path):
+    env_file = tmp_path / ".env.adr"
+
+    for reference in [
+        "op://awesome-deep-researchers/api%2fkeys/OPENAI_API_KEY",
+        "op://awesome-deep-researchers/api%3fkeys/OPENAI_API_KEY",
+        "op://awesome-deep-researchers/api%23keys/OPENAI_API_KEY",
+        "op://awesome-deep-researchers/api%2dkeys/OPENAI_API_KEY",
+    ]:
+        env_file.write_text(f"OPENAI_API_KEY={reference}\n", encoding="utf-8")
+
+        results = op_env.check_env_file(env_file, ["OPENAI_API_KEY"])
+
+        assert results[0].ok is False
+        assert results[0].detail == "not an op:// reference"
+
+
 def test_env_file_rejects_duplicate_op_references_across_required_names(tmp_path: Path):
     env_file = tmp_path / ".env.adr"
     env_file.write_text(

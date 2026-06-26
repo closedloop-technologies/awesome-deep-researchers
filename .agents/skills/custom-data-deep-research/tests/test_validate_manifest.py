@@ -3,7 +3,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.validate_manifest import is_safe_http_url, is_safe_relative_path, validate_manifest
+from scripts.validate_manifest import (
+    has_valid_hostname_syntax,
+    is_safe_http_url,
+    is_safe_relative_path,
+    validate_manifest,
+)
 
 
 def valid_manifest():
@@ -93,9 +98,17 @@ def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("docs/my report.pdf") is False
     assert is_safe_relative_path("docs/report\tcopy.pdf") is False
     assert is_safe_relative_path("docs/report\x7f.pdf") is False
+    assert is_safe_relative_path("docs/report.pdf?download=1") is False
+    assert is_safe_relative_path("docs/report.pdf#page=2") is False
     assert is_safe_relative_path("docs/%2e%2e/report.pdf") is False
+    assert is_safe_relative_path("docs/%252e%252e/report.pdf") is False
     assert is_safe_relative_path("docs%2freport.pdf") is False
     assert is_safe_relative_path("docs%5creport.pdf") is False
+    assert is_safe_relative_path("docs/report%3fdownload.pdf") is False
+    assert is_safe_relative_path("docs/report%253fdownload.pdf") is False
+    assert is_safe_relative_path("docs/report%23page.pdf") is False
+    assert is_safe_relative_path("docs/report%2523page.pdf") is False
+    assert is_safe_relative_path("docs/report%2epdf") is False
     assert is_safe_relative_path("docs/report%zz.pdf") is False
 
 
@@ -108,13 +121,52 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://user:token@example.com/report") is False
     assert is_safe_http_url("https://example.com/report\nnext") is False
     assert is_safe_http_url("https://example.com/bad%20path") is False
+    assert is_safe_http_url("https://example.com/search?q=bad%2520path") is False
     assert is_safe_http_url("https://example.com/bad%7fpath") is False
+    assert is_safe_http_url("https://example.com/search?q=%2500") is False
+    assert is_safe_http_url("https://example.com/report%2epdf") is False
+    assert is_safe_http_url("https://example.com/reports%2f2026") is False
     assert is_safe_http_url("https://example.com/bad%zzpath") is False
+    assert is_safe_http_url("https://example.com:bad/report") is False
     assert is_safe_http_url("https://localhost/report") is False
     assert is_safe_http_url("https://127.0.0.1/report") is False
+    assert is_safe_http_url("https://2130706433/report") is False
+    assert is_safe_http_url("https://0x7f000001/report") is False
+    assert is_safe_http_url("https://017700000001/report") is False
+    assert is_safe_http_url("https://127.1/report") is False
+    assert is_safe_http_url("https://10.0.0.5/report") is False
+    assert is_safe_http_url("https://172.16.0.5/report") is False
+    assert is_safe_http_url("https://192.168.1.5/report") is False
+    assert is_safe_http_url("https://[fd00::1]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::7f00:1]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::a00:5]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::c0a8:105]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::808:808]/report") is True
     assert is_safe_http_url("https://example.com./report") is False
     assert is_safe_http_url("https://%65xample.com/report") is False
+    assert is_safe_http_url("https://bad_host.example/report") is False
+    assert is_safe_http_url("https://-bad.example/report") is False
+    assert is_safe_http_url("https://bad-.example/report") is False
+    assert is_safe_http_url("https://bad..example/report") is False
+    assert is_safe_http_url("https://example/report") is False
+    assert is_safe_http_url("https://example.123/report") is False
     assert is_safe_http_url(" https://example.com/report") is False
+
+
+def test_has_valid_hostname_syntax_accepts_domains_and_ip_literals():
+    assert has_valid_hostname_syntax("example.com")
+    assert has_valid_hostname_syntax("docs.example-1.com")
+    assert has_valid_hostname_syntax("8.8.8.8")
+    assert has_valid_hostname_syntax("2001:4860:4860::8888")
+
+
+def test_has_valid_hostname_syntax_rejects_malformed_dns_labels():
+    assert has_valid_hostname_syntax("bad_host.example") is False
+    assert has_valid_hostname_syntax("-bad.example") is False
+    assert has_valid_hostname_syntax("bad-.example") is False
+    assert has_valid_hostname_syntax("bad..example") is False
+    assert has_valid_hostname_syntax("example") is False
+    assert has_valid_hostname_syntax("example.123") is False
 
 
 def test_local_and_csv_paths_must_be_safe_relative_paths():

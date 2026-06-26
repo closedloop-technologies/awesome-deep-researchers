@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import re
+import socket
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import unquote, urlsplit
-
 
 SUPPORTED_SOURCE_TYPES = {
     "google_drive",
@@ -45,12 +46,50 @@ URL_FIELDS_BY_TYPE = {
     "ticket": ("url",),
 }
 MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+HOST_LABEL_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$", re.IGNORECASE)
+NAT64_WELL_KNOWN_PREFIX = ipaddress.IPv6Network("64:ff9b::/96")
+
+
+def parse_legacy_ipv4_address(hostname: str) -> ipaddress.IPv4Address | None:
+    try:
+        packed_address = socket.inet_aton(hostname)
+    except OSError:
+        return None
+    try:
+        return ipaddress.IPv4Address(packed_address)
+    except ipaddress.AddressValueError:
+        return None
+
+
+def normalize_host_ip(
+    host_ip: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
+    if isinstance(host_ip, ipaddress.IPv6Address) and host_ip in NAT64_WELL_KNOWN_PREFIX:
+        return ipaddress.IPv4Address(int(host_ip) & 0xFFFFFFFF)
+    return host_ip
+
+
+def has_valid_hostname_syntax(hostname: str) -> bool:
+    if not hostname or len(hostname) > 253:
+        return False
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        labels = hostname.split(".")
+        return (
+            len(labels) >= 2
+            and any(character.isalpha() for character in labels[-1])
+            and all(HOST_LABEL_RE.fullmatch(label) for label in labels)
+        )
+    return True
 
 
 def is_safe_relative_path(value: str) -> bool:
     if MALFORMED_PERCENT_ENCODING_RE.search(value):
         return False
     if "\\" in value:
+        return False
+    if "?" in value or "#" in value:
         return False
     if any(character.isspace() for character in value):
         return False
@@ -64,11 +103,40 @@ def is_safe_relative_path(value: str) -> bool:
         return False
     if "\\" in decoded_value:
         return False
+    if "?" in decoded_value or "#" in decoded_value:
+        return False
     if decoded_value.split("/") != value.split("/"):
+        return False
+    if decoded_value != value:
         return False
     return not Path(decoded_value).is_absolute() and all(
         part not in {"", ".", ".."} for part in decoded_value.split("/")
     )
+
+
+def has_decoded_control_character(value: str) -> bool:
+    decoded_value = value
+    for _ in range(3):
+        previous_value = decoded_value
+        try:
+            decoded_value = unquote(previous_value, errors="strict")
+        except UnicodeDecodeError:
+            return True
+        if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
+            return True
+        if decoded_value == previous_value:
+            return False
+    return False
+
+
+def fully_unquote(value: str) -> str:
+    decoded_value = value
+    for _ in range(3):
+        previous_value = decoded_value
+        decoded_value = unquote(previous_value, errors="strict")
+        if decoded_value == previous_value:
+            return decoded_value
+    return decoded_value
 
 
 def is_safe_http_url(value: Any) -> bool:
@@ -82,23 +150,41 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if MALFORMED_PERCENT_ENCODING_RE.search(value):
         return False
-    try:
-        decoded_value = unquote(value, errors="strict")
-    except UnicodeDecodeError:
+    if has_decoded_control_character(value):
         return False
-    if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
-        return False
+    decoded_value = fully_unquote(value)
     if any(character.isspace() for character in decoded_value):
         return False
-    parsed = urlsplit(value)
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        return False
     if parsed.scheme not in {"http", "https"}:
         return False
     if not parsed.hostname:
+        return False
+    if unquote(parsed.path, errors="strict") != parsed.path:
+        return False
+    try:
+        parsed.port
+    except ValueError:
         return False
     if parsed.username is not None or parsed.password is not None:
         return False
     hostname = parsed.hostname.lower()
     if hostname.endswith("."):
+        return False
+    try:
+        host_ip = normalize_host_ip(ipaddress.ip_address(hostname))
+    except ValueError:
+        host_ip = parse_legacy_ipv4_address(hostname)
+    if host_ip is not None and (
+        host_ip.is_private
+        or host_ip.is_loopback
+        or host_ip.is_link_local
+        or host_ip.is_multicast
+        or host_ip.is_unspecified
+    ):
         return False
     if "%" in parsed.netloc.rsplit("@", 1)[-1].split(":", 1)[0]:
         return False
@@ -110,6 +196,8 @@ def is_safe_http_url(value: Any) -> bool:
         or hostname.startswith("127.")
         or hostname == "::1"
     ):
+        return False
+    if not has_valid_hostname_syntax(hostname):
         return False
     return True
 
