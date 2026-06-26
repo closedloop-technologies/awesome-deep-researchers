@@ -82,6 +82,11 @@ def has_trailing_host_dot(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and bool(parsed.hostname) and parsed.hostname.endswith(".")
 
 
+def has_percent_encoded_host(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme in {"http", "https"} and "%" in parsed.netloc
+
+
 def has_remote_parent_directory_reference(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and ".." in Path(unquote(parsed.path)).parts
@@ -130,6 +135,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         )
     if parsed.scheme in {"http", "https"} and not parsed.netloc:
         return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
+    if has_percent_encoded_host(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} host must not contain percent encoding",
+        )
     if has_trailing_host_dot(entry.source):
         return CheckResult(
             False,
@@ -375,6 +385,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(False, f"{entry.skill}: {entry.source} must use HTTPS")
         if not parsed.netloc:
             return CheckResult(False, f"{entry.skill}: {entry.source} must include a host")
+        if has_percent_encoded_host(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} host must not contain percent encoding",
+            )
         if has_trailing_host_dot(entry.source):
             return CheckResult(
                 False,
