@@ -8,7 +8,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 from urllib.parse import unquote, urlsplit
 
 
@@ -76,12 +76,38 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if any(ord(character) < 32 or ord(character) == 127 for character in value):
         return False
+    if any(character.isspace() for character in value):
+        return False
+    if MALFORMED_PERCENT_ENCODING_RE.search(value):
+        return False
+    try:
+        decoded_value = unquote(value, errors="strict")
+    except UnicodeDecodeError:
+        return False
+    if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
+        return False
+    if any(character.isspace() for character in decoded_value):
+        return False
     parsed = urlsplit(value)
     if parsed.scheme not in {"http", "https"}:
         return False
     if not parsed.hostname:
         return False
     if parsed.username is not None or parsed.password is not None:
+        return False
+    hostname = parsed.hostname.lower()
+    if hostname.endswith("."):
+        return False
+    if "%" in parsed.netloc.rsplit("@", 1)[-1].split(":", 1)[0]:
+        return False
+    if (
+        hostname == "localhost"
+        or hostname.endswith(".localhost")
+        or hostname == "0.0.0.0"
+        or hostname == "127.0.0.1"
+        or hostname.startswith("127.")
+        or hostname == "::1"
+    ):
         return False
     return True
 
