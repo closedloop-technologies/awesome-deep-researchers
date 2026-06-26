@@ -89,6 +89,8 @@ def is_safe_relative_path(value: str) -> bool:
         return False
     if decoded_value.split("/") != value.split("/"):
         return False
+    if decoded_value != value:
+        return False
     return not Path(decoded_value).is_absolute() and all(
         part not in {"", ".", ".."} for part in decoded_value.split("/")
     )
