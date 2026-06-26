@@ -46,6 +46,10 @@ URL_FIELDS_BY_TYPE = {
 
 
 def is_safe_relative_path(value: str) -> bool:
+    if "\\" in value:
+        return False
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        return False
     return not Path(value).is_absolute() and all(
         part not in {"", ".", ".."} for part in value.split("/")
     )
