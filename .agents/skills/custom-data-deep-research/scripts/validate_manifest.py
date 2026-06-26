@@ -8,6 +8,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
+from urllib.parse import urlsplit
 
 
 SUPPORTED_SOURCE_TYPES = {
@@ -36,12 +37,35 @@ TYPE_REQUIRED = {
     "email": {"mailbox", "message_id", "timestamp"},
     "ticket": {"system", "ticket_id", "url"},
 }
+URL_FIELDS_BY_TYPE = {
+    "google_drive": ("web_url",),
+    "youtube": ("url",),
+    "arxiv": ("pdf_url",),
+    "ticket": ("url",),
+}
 
 
 def is_safe_relative_path(value: str) -> bool:
     return not Path(value).is_absolute() and all(
         part not in {"", ".", ".."} for part in value.split("/")
     )
+
+
+def is_safe_http_url(value: Any) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    if value != value.strip():
+        return False
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        return False
+    parsed = urlsplit(value)
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    if not parsed.hostname:
+        return False
+    if parsed.username is not None or parsed.password is not None:
+        return False
+    return True
 
 
 def load_manifest(path: Path) -> Dict[str, Any]:
@@ -65,6 +89,11 @@ def validate_source(source: Dict[str, Any], index: int) -> List[str]:
     missing_type = sorted(name for name in TYPE_REQUIRED[source_type] if not source.get(name))
     for name in missing_type:
         errors.append(f"{label}: missing {source_type} field {name}")
+
+    for field_name in URL_FIELDS_BY_TYPE.get(source_type, ()):
+        value = source.get(field_name)
+        if value and not is_safe_http_url(value):
+            errors.append(f"{label}: {field_name} must be an absolute http(s) URL")
 
     anchors = source.get("anchors", [])
     if anchors is not None and not isinstance(anchors, list):

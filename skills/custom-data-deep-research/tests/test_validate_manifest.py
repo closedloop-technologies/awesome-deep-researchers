@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.validate_manifest import is_safe_relative_path, validate_manifest
+from scripts.validate_manifest import is_safe_http_url, is_safe_relative_path, validate_manifest
 
 
 def valid_manifest():
@@ -91,6 +91,17 @@ def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("./report.pdf") is False
 
 
+def test_safe_http_url_requires_absolute_http_url_without_credentials():
+    assert is_safe_http_url("https://example.com/report") is True
+    assert is_safe_http_url("http://example.com/report") is True
+    assert is_safe_http_url("example.com/report") is False
+    assert is_safe_http_url("ftp://example.com/report") is False
+    assert is_safe_http_url("https:///report") is False
+    assert is_safe_http_url("https://user:token@example.com/report") is False
+    assert is_safe_http_url("https://example.com/report\nnext") is False
+    assert is_safe_http_url(" https://example.com/report") is False
+
+
 def test_local_and_csv_paths_must_be_safe_relative_paths():
     manifest = valid_manifest()
     manifest["sources"][2]["path"] = "../private/report.pdf"
@@ -119,3 +130,28 @@ def test_s3_key_must_be_safe_relative_path():
     errors = validate_manifest(manifest)
 
     assert any("s3-1: key must be a safe relative path" in error for error in errors)
+
+
+def test_url_fields_must_be_absolute_http_urls():
+    manifest = valid_manifest()
+    manifest["sources"][0]["web_url"] = "docs.google.com/document/d/1abc"
+    manifest["sources"][1]["url"] = "https://user:token@youtube.com/watch?v=abc123"
+    manifest["sources"][4]["pdf_url"] = "file:///tmp/paper.pdf"
+    manifest["sources"].append(
+        {
+            "source_id": "ticket-1",
+            "source_type": "ticket",
+            "title": "Bug",
+            "citation_anchor": "ticket id",
+            "system": "jira",
+            "ticket_id": "BUG-1",
+            "url": "https://tickets.example.com/browse/BUG-1\x7f",
+        }
+    )
+
+    errors = validate_manifest(manifest)
+
+    assert any("gdoc-1: web_url must be an absolute http(s) URL" in error for error in errors)
+    assert any("yt-1: url must be an absolute http(s) URL" in error for error in errors)
+    assert any("arxiv-1: pdf_url must be an absolute http(s) URL" in error for error in errors)
+    assert any("ticket-1: url must be an absolute http(s) URL" in error for error in errors)
