@@ -90,7 +90,10 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if any(character.isspace() for character in decoded_value):
         return False
-    parsed = urlsplit(value)
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        return False
     if parsed.scheme not in {"http", "https"}:
         return False
     if not parsed.hostname:

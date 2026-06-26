@@ -114,6 +114,7 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://127.0.0.1/report") is False
     assert is_safe_http_url("https://example.com./report") is False
     assert is_safe_http_url("https://%65xample.com/report") is False
+    assert is_safe_http_url("https://[::1/report") is False
     assert is_safe_http_url(" https://example.com/report") is False
 
 
@@ -215,3 +216,12 @@ def test_url_fields_must_be_absolute_http_urls():
     assert any("yt-1: url must be an absolute http(s) URL" in error for error in errors)
     assert any("arxiv-1: pdf_url must be an absolute http(s) URL" in error for error in errors)
     assert any("ticket-1: url must be an absolute http(s) URL" in error for error in errors)
+
+
+def test_url_fields_reject_malformed_bracketed_hosts_without_crashing():
+    manifest = valid_manifest()
+    manifest["sources"][0]["web_url"] = "https://[::1/report"
+
+    errors = validate_manifest(manifest)
+
+    assert any("gdoc-1: web_url must be an absolute http(s) URL" in error for error in errors)
