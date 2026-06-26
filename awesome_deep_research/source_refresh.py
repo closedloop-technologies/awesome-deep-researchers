@@ -7,6 +7,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Iterable, List, Sequence
 from urllib.parse import unquote, urlparse
@@ -87,6 +88,19 @@ def has_percent_encoded_host(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and "%" in parsed.netloc
 
 
+def has_non_global_host(url: str) -> bool:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    host = (parsed.hostname or "").rstrip(".").casefold()
+    if host in {"localhost", "0.0.0.0"} or host.endswith(".localhost"):
+        return True
+    try:
+        return not ip_address(host).is_global
+    except ValueError:
+        return False
+
+
 def has_remote_parent_directory_reference(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and ".." in Path(unquote(parsed.path)).parts
@@ -144,6 +158,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} host must not end with a dot",
+        )
+    if has_non_global_host(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} host must be public",
         )
     if parsed.scheme in {"http", "https"} and "\\" in parsed.path:
         return CheckResult(
@@ -394,6 +413,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} host must not end with a dot",
+            )
+        if has_non_global_host(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} host must be public",
             )
         if "\\" in parsed.path:
             return CheckResult(
