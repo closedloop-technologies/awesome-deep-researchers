@@ -1,4 +1,5 @@
 from datetime import date
+from math import inf
 
 from awesome_deep_research import source_refresh
 
@@ -1017,6 +1018,25 @@ def test_source_link_rejects_plain_http_before_request(monkeypatch, tmp_path):
 
     assert result.ok is False
     assert "must use HTTPS" in result.message
+
+
+def test_source_link_rejects_invalid_timeout_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    for timeout in (0, -1, True, "10", inf):
+        result = source_refresh.check_link(
+            source_refresh.SourceEntry("example-skill", "https://example.com/source.md"),
+            repo_root=tmp_path,
+            timeout=timeout,
+        )
+
+        assert result == source_refresh.CheckResult(
+            False,
+            "timeout must be a positive number",
+        )
 
 
 def test_source_link_rejects_credentialed_urls_before_request(monkeypatch, tmp_path):

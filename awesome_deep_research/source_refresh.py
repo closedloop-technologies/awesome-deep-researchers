@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import sys
 from collections import Counter
@@ -304,6 +305,15 @@ def check_source_index(
 
 
 def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float = 10.0) -> CheckResult:
+    if isinstance(timeout, bool):
+        return CheckResult(False, "timeout must be a positive number")
+    try:
+        finite_timeout = math.isfinite(timeout)
+    except TypeError:
+        return CheckResult(False, "timeout must be a positive number")
+    if not finite_timeout or timeout <= 0:
+        return CheckResult(False, "timeout must be a positive number")
+
     if any(character.isspace() for character in entry.source):
         return CheckResult(
             False,
