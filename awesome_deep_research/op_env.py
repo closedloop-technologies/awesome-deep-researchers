@@ -10,6 +10,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence
+from urllib.parse import unquote
 
 from .audit import REQUIRED_ENV_NAMES, REPO_ROOT
 
@@ -20,6 +21,8 @@ DEFAULT_OP_VAULT = "awesome-deep-researchers"
 DEFAULT_OP_ITEM = "api-keys"
 OP_REF_RE = re.compile(r"^op://[^\s/]+/[^\s/]+/[^\s/]+$")
 ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
+MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+ENCODED_PATH_SEPARATOR_RE = re.compile(r"%2f|%5c", re.IGNORECASE)
 
 
 @dataclass
@@ -27,6 +30,30 @@ class EnvCheckResult:
     name: str
     ok: bool
     detail: str
+
+
+def has_control_character(value: str) -> bool:
+    return any(ord(character) < 32 or ord(character) == 127 for character in value)
+
+
+def has_safe_op_reference_segments(value: str) -> bool:
+    if not OP_REF_RE.match(value):
+        return False
+    for segment in value.removeprefix("op://").split("/"):
+        if MALFORMED_PERCENT_ENCODING_RE.search(segment):
+            return False
+        decoded_segment = unquote(segment)
+        if has_control_character(decoded_segment):
+            return False
+        if any(character.isspace() for character in decoded_segment):
+            return False
+        if "?" in segment or "#" in segment or "?" in decoded_segment or "#" in decoded_segment:
+            return False
+        if ENCODED_PATH_SEPARATOR_RE.search(segment):
+            return False
+        if decoded_segment != segment:
+            return False
+    return True
 
 
 def iter_env_assignments(path: Path) -> Iterable[tuple[str, str]]:
@@ -75,7 +102,7 @@ def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckRe
             results.append(EnvCheckResult(name, False, "malformed assignment"))
         elif not value:
             results.append(EnvCheckResult(name, False, "missing"))
-        elif not OP_REF_RE.match(value):
+        elif not has_safe_op_reference_segments(value):
             results.append(EnvCheckResult(name, False, "not an op:// reference"))
         else:
             results.append(EnvCheckResult(name, True, "op reference present"))
@@ -84,7 +111,7 @@ def check_env_file(path: Path, required_names: Iterable[str]) -> List[EnvCheckRe
     op_reference_counts = Counter(
         values.get(name, "")
         for name in required_names
-        if OP_REF_RE.match(values.get(name, ""))
+        if has_safe_op_reference_segments(values.get(name, ""))
     )
     duplicate_references = sorted(
         reference for reference, count in op_reference_counts.items() if count > 1
