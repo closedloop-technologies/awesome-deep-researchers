@@ -244,6 +244,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} must not contain current directory references",
         )
+    if not parsed.scheme and has_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain percent-encoded aliases",
+        )
     return None
 
 
@@ -514,6 +519,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain current directory references",
+        )
+    if has_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain percent-encoded aliases",
         )
     local_path = (repo_root / local_source_path).resolve()
     try:
