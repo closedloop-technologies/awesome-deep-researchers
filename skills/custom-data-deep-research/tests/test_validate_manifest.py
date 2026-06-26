@@ -83,6 +83,35 @@ def test_unsupported_source_type_fails():
     assert any("unsupported source_type" in error for error in errors)
 
 
+def test_allowed_sources_must_be_source_id_list():
+    manifest = valid_manifest()
+    manifest["allowed_sources"] = ["gdoc-1", "yt-1", " local-1", 42]
+
+    errors = validate_manifest(manifest)
+
+    assert any("allowed_sources must be a list of source IDs" in error for error in errors)
+
+
+def test_allowed_sources_must_be_unique():
+    manifest = valid_manifest()
+    manifest["allowed_sources"].append("gdoc-1")
+
+    errors = validate_manifest(manifest)
+
+    assert any("gdoc-1: duplicate allowed source" in error for error in errors)
+
+
+def test_allowed_sources_must_match_manifest_sources():
+    manifest = valid_manifest()
+    manifest["allowed_sources"].remove("s3-1")
+    manifest["allowed_sources"].append("missing-1")
+
+    errors = validate_manifest(manifest)
+
+    assert any("missing-1: allowed source is not present in sources" in error for error in errors)
+    assert any("s3-1: source is missing from allowed_sources" in error for error in errors)
+
+
 def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("docs/report.pdf") is True
     assert is_safe_relative_path("/docs/report.pdf") is False

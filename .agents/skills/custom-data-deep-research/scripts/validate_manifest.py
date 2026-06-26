@@ -9,7 +9,7 @@ import re
 import sys
 from ipaddress import ip_address
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 from urllib.parse import unquote, urlsplit
 
 
@@ -176,6 +176,19 @@ def validate_manifest(manifest: Dict[str, Any]) -> List[str]:
         errors.append("manifest: missing research_question")
     if not manifest.get("allowed_sources"):
         errors.append("manifest: missing allowed_sources")
+    allowed_sources = manifest.get("allowed_sources")
+    allowed_source_ids: Set[str] = set()
+    if allowed_sources:
+        if not isinstance(allowed_sources, list) or not all(
+            isinstance(source_id, str) and source_id.strip() == source_id and source_id
+            for source_id in allowed_sources
+        ):
+            errors.append("manifest: allowed_sources must be a list of source IDs")
+        else:
+            for source_id in allowed_sources:
+                if source_id in allowed_source_ids:
+                    errors.append(f"{source_id}: duplicate allowed source")
+                allowed_source_ids.add(source_id)
 
     sources = manifest.get("sources")
     if not isinstance(sources, list) or not sources:
@@ -193,6 +206,14 @@ def validate_manifest(manifest: Dict[str, Any]) -> List[str]:
         if source_id:
             seen.add(source_id)
         errors.extend(validate_source(source, index))
+
+    if allowed_source_ids:
+        unknown_allowed_sources = sorted(allowed_source_ids - seen)
+        for source_id in unknown_allowed_sources:
+            errors.append(f"{source_id}: allowed source is not present in sources")
+        unlisted_sources = sorted(seen - allowed_source_ids)
+        for source_id in unlisted_sources:
+            errors.append(f"{source_id}: source is missing from allowed_sources")
 
     return errors
 
