@@ -46,6 +46,7 @@ URL_FIELDS_BY_TYPE = {
     "ticket": ("url",),
 }
 MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+HOST_LABEL_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$", re.IGNORECASE)
 
 
 def parse_legacy_ipv4_address(hostname: str) -> ipaddress.IPv4Address | None:
@@ -57,6 +58,16 @@ def parse_legacy_ipv4_address(hostname: str) -> ipaddress.IPv4Address | None:
         return ipaddress.IPv4Address(packed_address)
     except ipaddress.AddressValueError:
         return None
+
+
+def has_valid_hostname_syntax(hostname: str) -> bool:
+    if not hostname or len(hostname) > 253:
+        return False
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        return all(HOST_LABEL_RE.fullmatch(label) for label in hostname.split("."))
+    return True
 
 
 def is_safe_relative_path(value: str) -> bool:
@@ -102,7 +113,10 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if any(character.isspace() for character in decoded_value):
         return False
-    parsed = urlsplit(value)
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        return False
     if parsed.scheme not in {"http", "https"}:
         return False
     if not parsed.hostname:
@@ -140,6 +154,8 @@ def is_safe_http_url(value: Any) -> bool:
         or hostname.startswith("127.")
         or hostname == "::1"
     ):
+        return False
+    if not has_valid_hostname_syntax(hostname):
         return False
     return True
 

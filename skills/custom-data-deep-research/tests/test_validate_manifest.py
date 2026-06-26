@@ -3,7 +3,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.validate_manifest import is_safe_http_url, is_safe_relative_path, validate_manifest
+from scripts.validate_manifest import (
+    has_valid_hostname_syntax,
+    is_safe_http_url,
+    is_safe_relative_path,
+    validate_manifest,
+)
 
 
 def valid_manifest():
@@ -125,7 +130,25 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://[fd00::1]/report") is False
     assert is_safe_http_url("https://example.com./report") is False
     assert is_safe_http_url("https://%65xample.com/report") is False
+    assert is_safe_http_url("https://bad_host.example/report") is False
+    assert is_safe_http_url("https://-bad.example/report") is False
+    assert is_safe_http_url("https://bad-.example/report") is False
+    assert is_safe_http_url("https://bad..example/report") is False
     assert is_safe_http_url(" https://example.com/report") is False
+
+
+def test_has_valid_hostname_syntax_accepts_domains_and_ip_literals():
+    assert has_valid_hostname_syntax("example.com")
+    assert has_valid_hostname_syntax("docs.example-1.com")
+    assert has_valid_hostname_syntax("8.8.8.8")
+    assert has_valid_hostname_syntax("2001:4860:4860::8888")
+
+
+def test_has_valid_hostname_syntax_rejects_malformed_dns_labels():
+    assert has_valid_hostname_syntax("bad_host.example") is False
+    assert has_valid_hostname_syntax("-bad.example") is False
+    assert has_valid_hostname_syntax("bad-.example") is False
+    assert has_valid_hostname_syntax("bad..example") is False
 
 
 def test_local_and_csv_paths_must_be_safe_relative_paths():
