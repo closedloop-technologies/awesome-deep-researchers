@@ -31,10 +31,10 @@ op run --env-file .env.adr -- python benchmark/live_smoke.py -v
 
 The default live skills are:
 
-- `you-research` with `research_effort=lite`
-- `gemini-deep-research` in grounded Interactions API mode
-- `tavily-search` with the benchmark's default bounded query command
-- `jina-ai` for low-cost retrieval/reader coverage
+- `deep-research-you` with `research_effort=lite`
+- `deep-research-gemini` in grounded Interactions API mode
+- `deep-research-tavily` with the benchmark's default bounded query command
+- `deep-research-jina` for low-cost retrieval/reader coverage
 
 Results are written to `benchmark/results/live-smoke/` and successful outputs
 are automatically normalized to OKF under `benchmark/results/live-smoke/okf/`.
@@ -45,7 +45,7 @@ To fail if any requested provider key is missing:
 
 ```bash
 op run --env-file .env.adr -- python benchmark/live_smoke.py \
-  --skills you-research gemini-deep-research perplexity-sonar \
+  --skills deep-research-you deep-research-gemini deep-research-perplexity \
   --fail-missing-env \
   -v
 ```

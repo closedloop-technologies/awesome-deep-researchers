@@ -54,7 +54,7 @@ A normalized bundle is acceptable when:
 Validate a bundle with:
 
 ```bash
-python .agents/skills/okf-normalize-research/scripts/validate_okf.py \
+python .agents/skills/deep-research-okf-normalize/scripts/validate_okf.py \
   benchmark/results/okf/<skill>/<task>
 ```
 

@@ -10,14 +10,14 @@ These unlock the main commercial API skills and the default live smoke flow.
 
 | Priority | Service | Signup / Console | 1Password Field | Used By |
 | --- | --- | --- | --- | --- |
-| 1 | OpenAI Platform | https://platform.openai.com/api-keys | `OPENAI_API_KEY` | `openai-deep-research`, GPT Researcher, STORM, Smolagents |
-| 2 | Google AI Studio / Gemini API | https://aistudio.google.com/apikey | `GOOGLE_API_KEY`, optional `GOOGLE_CLOUD_PROJECT` | `gemini-deep-research` |
-| 3 | Perplexity API | https://docs.perplexity.ai/docs/getting-started | `PERPLEXITY_API_KEY` | `perplexity-sonar` |
-| 4 | Exa | https://dashboard.exa.ai/api-keys | `EXA_API_KEY` | `exa-research` |
-| 5 | Tavily | https://app.tavily.com/home | `TAVILY_API_KEY` | `tavily-search`, GPT Researcher |
-| 6 | Jina AI | https://jina.ai/reader/ | `JINA_API_KEY` | `jina-ai` |
-| 7 | xAI Console | https://console.x.ai/ | `XAI_API_KEY` | `xai-grok` |
-| 8 | You.com API | https://api.you.com/ | `YOU_API_KEY` | `you-research`, optional STORM retriever |
+| 1 | OpenAI Platform | https://platform.openai.com/api-keys | `OPENAI_API_KEY` | `deep-research-openai`, GPT Researcher, STORM, Smolagents |
+| 2 | Google AI Studio / Gemini API | https://aistudio.google.com/apikey | `GOOGLE_API_KEY`, optional `GOOGLE_CLOUD_PROJECT` | `deep-research-gemini` |
+| 3 | Perplexity API | https://docs.perplexity.ai/docs/getting-started | `PERPLEXITY_API_KEY` | `deep-research-perplexity` |
+| 4 | Exa | https://dashboard.exa.ai/api-keys | `EXA_API_KEY` | `deep-research-exa` |
+| 5 | Tavily | https://app.tavily.com/home | `TAVILY_API_KEY` | `deep-research-tavily`, GPT Researcher |
+| 6 | Jina AI | https://jina.ai/reader/ | `JINA_API_KEY` | `deep-research-jina` |
+| 7 | xAI Console | https://console.x.ai/ | `XAI_API_KEY` | `deep-research-xai-grok` |
+| 8 | You.com API | https://api.you.com/ | `YOU_API_KEY` | `deep-research-you`, optional STORM retriever |
 
 ## Optional Framework Keys
 
@@ -26,7 +26,7 @@ backends.
 
 | Service | Signup / Console | 1Password Field | Used By |
 | --- | --- | --- | --- |
-| Hugging Face | https://huggingface.co/settings/tokens | `HF_TOKEN` | `smolagents`, model downloads, hosted inference |
+| Hugging Face | https://huggingface.co/settings/tokens | `HF_TOKEN` | `deep-research-smolagents`, model downloads, hosted inference |
 | Anthropic Console | https://console.anthropic.com/settings/keys | `ANTHROPIC_API_KEY` | LangChain or Smolagents with Claude models |
 | SearchAPI.io or Bing-compatible Web Search | https://www.searchapi.io/ | `BING_SEARCH_API_KEY` | STORM retriever option |
 | You.com Search API / YDC | https://api.you.com/ | `YDC_API_KEY` | STORM retriever option |

@@ -64,13 +64,13 @@ allowed sources, and per-source citation anchors:
 Validate the manifest before synthesis:
 
 ```bash
-python .agents/skills/custom-data-deep-research/scripts/validate_manifest.py \
+python .agents/skills/deep-research-custom-data/scripts/validate_manifest.py \
   staging/custom-corpus/manifest.json
 ```
 
 The repository includes `docs/examples/custom-data-corpus.example.json` as a
 minimal mixed-source manifest. The benchmark uses that fixture for the
-zero-cost `custom-data-deep-research` validation smoke.
+zero-cost `deep-research-custom-data` validation smoke.
 
 ## Google Docs and Drive
 

@@ -15,37 +15,37 @@ from benchmark.utils import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROVIDER_SKILLS = {
-    "custom-data-deep-research",
-    "openai-deep-research",
-    "perplexity-sonar",
-    "exa-research",
-    "tavily-search",
-    "jina-ai",
-    "xai-grok",
-    "you-research",
-    "gemini-deep-research",
-    "gpt-researcher",
-    "langchain-deep-research",
-    "stanford-storm",
-    "smolagents",
+    "deep-research-custom-data",
+    "deep-research-openai",
+    "deep-research-perplexity",
+    "deep-research-exa",
+    "deep-research-tavily",
+    "deep-research-jina",
+    "deep-research-xai-grok",
+    "deep-research-you",
+    "deep-research-gemini",
+    "deep-research-gpt-researcher",
+    "deep-research-langchain",
+    "deep-research-stanford-storm",
+    "deep-research-smolagents",
 }
-OP_EXAMPLE_SKILLS = PROVIDER_SKILLS - {"custom-data-deep-research"}
+OP_EXAMPLE_SKILLS = PROVIDER_SKILLS - {"deep-research-custom-data"}
 
 
 def test_discover_skills_includes_agents_skills():
     skills = discover_skills()
     names = {skill["name"] for skill in skills}
 
-    assert "okf-normalize-research" in names
-    assert "you-research" in names
-    assert "gemini-deep-research" in names
+    assert "deep-research-okf-normalize" in names
+    assert "deep-research-you" in names
+    assert "deep-research-gemini" in names
 
-    okf_skill = next(skill for skill in skills if skill["name"] == "okf-normalize-research")
+    okf_skill = next(skill for skill in skills if skill["name"] == "deep-research-okf-normalize")
     assert okf_skill["script_path"].endswith("normalize_to_okf.py")
 
 
 def test_okf_normalizer_command_is_registered():
-    command_info = get_skill_command_info("okf-normalize-research")
+    command_info = get_skill_command_info("deep-research-okf-normalize")
 
     assert "--bundle-dir" in command_info["command"]
     assert "{question_slug}" in command_info["command"]
@@ -53,7 +53,7 @@ def test_okf_normalizer_command_is_registered():
 
 
 def test_custom_data_manifest_validator_command_is_registered():
-    command_info = get_skill_command_info("custom-data-deep-research")
+    command_info = get_skill_command_info("deep-research-custom-data")
 
     assert "custom-data-corpus.example.json" in command_info["command"]
     assert command_info["supports_query"] is False
@@ -69,8 +69,8 @@ def test_unknown_skill_does_not_get_implicit_benchmark_fallback():
 
 
 def test_you_and_gemini_commands_are_registered_for_under_one_dollar_defaults():
-    you_command = get_skill_command_info("you-research")["command"]
-    gemini_command = get_skill_command_info("gemini-deep-research")["command"]
+    you_command = get_skill_command_info("deep-research-you")["command"]
+    gemini_command = get_skill_command_info("deep-research-gemini")["command"]
 
     assert "--research-effort lite" in you_command
     assert "--mode grounded" in gemini_command

@@ -6,65 +6,65 @@ from .config import SKILLS_DIRS, TAXONOMY_FILE, EXCLUDED_SKILLS
 
 
 PREFERRED_MAIN_SCRIPTS = {
-    "custom-data-deep-research": "validate_manifest.py",
-    "okf-normalize-research": "normalize_to_okf.py",
+    "deep-research-custom-data": "validate_manifest.py",
+    "deep-research-okf-normalize": "normalize_to_okf.py",
 }
 
 SKILL_COMMAND_INFO = {
-    "exa-research": {
+    "deep-research-exa": {
         "command": "python {script} search {question} --num-results 5 --highlights",
         "supports_query": True,
     },
-    "gpt-researcher": {
+    "deep-research-gpt-researcher": {
         "command": "python {script} --query {question}",
         "supports_query": True,
     },
-    "jina-ai": {
+    "deep-research-jina": {
         "command": "python {script} search {question}",
         "supports_query": True,
     },
-    "langchain-deep-research": {
+    "deep-research-langchain": {
         "command": "python {script} --query {question}",
         "supports_query": True,
         "requires_server": True,
     },
-    "openai-deep-research": {
+    "deep-research-openai": {
         "command": "python {script} --prompt {question}",
         "supports_query": True,
     },
-    "perplexity-sonar": {
+    "deep-research-perplexity": {
         "command": "python {script} --prompt {question} --model sonar --search-context-size low",
         "supports_query": True,
     },
-    "smolagents": {
+    "deep-research-smolagents": {
         "command": "python {script} --task {question}",
         "supports_query": True,
     },
-    "stanford-storm": {
+    "deep-research-stanford-storm": {
         "command": "python {script} --topic {question}",
         "supports_query": True,
     },
-    "tavily-search": {
+    "deep-research-tavily": {
         "command": "python {script} --query {question} --search-depth basic --max-results 5",
         "supports_query": True,
     },
-    "xai-grok": {
+    "deep-research-xai-grok": {
         "command": "python {script} --query {question}",
         "supports_query": True,
     },
-    "you-research": {
+    "deep-research-you": {
         "command": "python {script} --prompt {question} --research-effort lite",
         "supports_query": True,
     },
-    "gemini-deep-research": {
+    "deep-research-gemini": {
         "command": "python {script} --prompt {question} --mode grounded --model gemini-3.5-flash",
         "supports_query": True,
     },
-    "custom-data-deep-research": {
+    "deep-research-custom-data": {
         "command": "python {script} docs/examples/custom-data-corpus.example.json",
         "supports_query": False,
     },
-    "okf-normalize-research": {
+    "deep-research-okf-normalize": {
         "command": "python {script} --text {question} --title {question} --provider {skill_name} --bundle-dir \"{output_dir}/okf/{skill_name}/{category_slug}/{question_slug}\"",
         "supports_query": True,
     },

@@ -14,36 +14,36 @@ from benchmark import utils as benchmark_utils
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REQUIRED_PROVIDER_SKILLS = {
-    "custom-data-deep-research",
-    "openai-deep-research",
-    "perplexity-sonar",
-    "exa-research",
-    "tavily-search",
-    "jina-ai",
-    "xai-grok",
-    "you-research",
-    "gemini-deep-research",
-    "gpt-researcher",
-    "langchain-deep-research",
-    "stanford-storm",
-    "smolagents",
+    "deep-research-custom-data",
+    "deep-research-openai",
+    "deep-research-perplexity",
+    "deep-research-exa",
+    "deep-research-tavily",
+    "deep-research-jina",
+    "deep-research-xai-grok",
+    "deep-research-you",
+    "deep-research-gemini",
+    "deep-research-gpt-researcher",
+    "deep-research-langchain",
+    "deep-research-stanford-storm",
+    "deep-research-smolagents",
 }
-REQUIRED_OP_EXAMPLE_SKILLS = REQUIRED_PROVIDER_SKILLS - {"custom-data-deep-research"}
+REQUIRED_OP_EXAMPLE_SKILLS = REQUIRED_PROVIDER_SKILLS - {"deep-research-custom-data"}
 REQUIRED_AGENTS_RUNNABLE_SKILLS = {
-    "custom-data-deep-research": "validate_manifest.py",
-    "exa-research": "exa_tools.py",
-    "gemini-deep-research": "gemini_research.py",
-    "gpt-researcher": "run_research.py",
-    "jina-ai": "jina_tools.py",
-    "langchain-deep-research": "research.py",
-    "you-research": "you_research.py",
-    "okf-normalize-research": "normalize_to_okf.py",
-    "openai-deep-research": "run_deep_research.py",
-    "perplexity-sonar": "ask.py",
-    "smolagents": "agent.py",
-    "stanford-storm": "run_storm.py",
-    "tavily-search": "tavily_search.py",
-    "xai-grok": "grok_research.py",
+    "deep-research-custom-data": "validate_manifest.py",
+    "deep-research-exa": "exa_tools.py",
+    "deep-research-gemini": "gemini_research.py",
+    "deep-research-gpt-researcher": "run_research.py",
+    "deep-research-jina": "jina_tools.py",
+    "deep-research-langchain": "research.py",
+    "deep-research-you": "you_research.py",
+    "deep-research-okf-normalize": "normalize_to_okf.py",
+    "deep-research-openai": "run_deep_research.py",
+    "deep-research-perplexity": "ask.py",
+    "deep-research-smolagents": "agent.py",
+    "deep-research-stanford-storm": "run_storm.py",
+    "deep-research-tavily": "tavily_search.py",
+    "deep-research-xai-grok": "grok_research.py",
 }
 REQUIRED_ENV_NAMES = {
     "OPENAI_API_KEY",
@@ -66,9 +66,9 @@ CANONICAL_PROMPT_SNIPPETS = {
     "under $1",
 }
 REQUIRED_SOURCE_INDEX_SNIPPETS = {
-    "openai-deep-research",
-    "gemini-deep-research",
-    "you-research",
+    "deep-research-openai",
+    "deep-research-gemini",
+    "deep-research-you",
     "okf/SPEC.md",
     "Last refreshed: 2026-06-23",
 }
@@ -326,8 +326,8 @@ def check_benchmark_command_coverage() -> AuditResult:
 
 def check_okf_tooling() -> AuditResult:
     required = [
-        REPO_ROOT / ".agents/skills/okf-normalize-research/scripts/normalize_to_okf.py",
-        REPO_ROOT / ".agents/skills/okf-normalize-research/scripts/validate_okf.py",
+        REPO_ROOT / ".agents/skills/deep-research-okf-normalize/scripts/normalize_to_okf.py",
+        REPO_ROOT / ".agents/skills/deep-research-okf-normalize/scripts/validate_okf.py",
         REPO_ROOT / "docs/okf-normalization.md",
     ]
     missing = [str(path.relative_to(REPO_ROOT)) for path in required if not path.exists()]
@@ -344,7 +344,7 @@ def check_custom_data_benchmark_command() -> AuditResult:
     utils = read_text(REPO_ROOT / "benchmark" / "utils.py")
     manifest = REPO_ROOT / "docs" / "examples" / "custom-data-corpus.example.json"
     ok = (
-        '"custom-data-deep-research": "validate_manifest.py"' in utils
+        '"deep-research-custom-data": "validate_manifest.py"' in utils
         and "custom-data-corpus.example.json" in utils
         and manifest.exists()
     )

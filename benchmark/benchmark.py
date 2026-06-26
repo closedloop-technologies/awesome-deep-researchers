@@ -19,7 +19,7 @@ from .utils import (
 from .tracker import BenchmarkTracker, BenchmarkMetrics
 
 
-OKF_SKILL_DIR = Path(__file__).parent.parent / ".agents" / "skills" / "okf-normalize-research"
+OKF_SKILL_DIR = Path(__file__).parent.parent / ".agents" / "skills" / "deep-research-okf-normalize"
 OKF_SCRIPTS_DIR = OKF_SKILL_DIR / "scripts"
 
 

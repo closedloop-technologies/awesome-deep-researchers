@@ -32,7 +32,7 @@ python run_benchmark.py -v
 ### Run Specific Skills
 
 ```bash
-python run_benchmark.py --skills exa-research tavily-search -v
+python run_benchmark.py --skills deep-research-exa deep-research-tavily -v
 ```
 
 ### Run Specific Categories
@@ -84,7 +84,7 @@ benchmark/results/
 │       ├── uncertainties.md
 │       ├── method.md
 │       └── log.md
-├── exa-research/
+├── deep-research-exa/
 │   ├── source_retrieval/
 │   │   ├── q1_metrics.json
 │   │   ├── q1_output.txt
@@ -94,7 +94,7 @@ benchmark/results/
 │   │   └── q3_output.txt
 │   └── technical_decomposition/
 │       └── ...
-├── gpt-researcher/
+├── deep-research-gpt-researcher/
 │   └── ...
 └── ...
 ```
@@ -160,7 +160,7 @@ Each category has 3 example questions.
 ### Test a Single Skill on All Categories
 
 ```bash
-python run_benchmark.py --skills tavily-search -v
+python run_benchmark.py --skills deep-research-tavily -v
 ```
 
 ### Quick Smoke Test (1 question per category)

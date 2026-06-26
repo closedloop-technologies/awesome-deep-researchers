@@ -8,23 +8,23 @@ docs, runnable scripts, requirements, and tests live here and are registered in
 
 - `deep-research-api-calls` - provider call patterns, API-key expectations,
   cost controls, and 1Password environment guidance.
-- `okf-normalize-research` - convert a deep research output into an Open
+- `deep-research-okf-normalize` - convert a deep research output into an Open
   Knowledge Format-style bundle.
-- `custom-data-deep-research` - plan custom-source research across Google Docs,
+- `deep-research-custom-data` - plan custom-source research across Google Docs,
   YouTube, local files, S3 buckets, arXiv papers, and similar corpora.
 - Provider-specific call guides:
-  - `openai-deep-research`
-  - `perplexity-sonar`
-  - `exa-research`
-  - `tavily-search`
-  - `jina-ai`
-  - `xai-grok`
-  - `you-research`
-  - `gemini-deep-research`
-  - `gpt-researcher`
-  - `langchain-deep-research`
-  - `stanford-storm`
-  - `smolagents`
+  - `deep-research-openai`
+  - `deep-research-perplexity`
+  - `deep-research-exa`
+  - `deep-research-tavily`
+  - `deep-research-jina`
+  - `deep-research-xai-grok`
+  - `deep-research-you`
+  - `deep-research-gemini`
+  - `deep-research-gpt-researcher`
+  - `deep-research-langchain`
+  - `deep-research-stanford-storm`
+  - `deep-research-smolagents`
 
 Provider skills include runnable scripts, requirements, and tests under this
 tree so benchmark and fan-out commands use the supported agent skill paths.

@@ -72,7 +72,7 @@ Run a benchmark through 1Password:
 
 ```bash
 op run --env-file .env.adr -- python benchmark/run_benchmark.py \
-  --skills perplexity-sonar \
+  --skills deep-research-perplexity \
   --categories "Repository Refresh & Meta Research" \
   --max-questions 1 \
   -v

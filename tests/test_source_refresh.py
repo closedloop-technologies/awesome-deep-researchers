@@ -11,15 +11,15 @@ def test_parse_source_entries_reads_skill_rows():
 
 | Skill | Source |
 | --- | --- |
-| `openai-deep-research` | https://example.com/openai |
-| `okf-normalize-research` | docs/okf-normalization.md |
+| `deep-research-openai` | https://example.com/openai |
+| `deep-research-okf-normalize` | docs/okf-normalization.md |
 """
 
     entries = source_refresh.parse_source_entries(text)
 
     assert [entry.skill for entry in entries] == [
-        "openai-deep-research",
-        "okf-normalize-research",
+        "deep-research-openai",
+        "deep-research-okf-normalize",
     ]
     assert entries[1].source == "docs/okf-normalization.md"
 

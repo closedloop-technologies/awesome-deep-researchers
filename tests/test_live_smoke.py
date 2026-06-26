@@ -15,31 +15,31 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 def test_missing_env_for_skill_reports_unset_required_env(monkeypatch):
     monkeypatch.delenv("YOU_API_KEY", raising=False)
 
-    assert live_smoke.missing_env_for_skill("you-research") == ["YOU_API_KEY"]
+    assert live_smoke.missing_env_for_skill("deep-research-you") == ["YOU_API_KEY"]
 
 
 def test_select_ready_skills_skips_missing_env(monkeypatch):
     monkeypatch.delenv("YOU_API_KEY", raising=False)
 
     selected, skipped = live_smoke.select_ready_skills(
-        ["you-research"],
-        available_skills=["you-research"],
+        ["deep-research-you"],
+        available_skills=["deep-research-you"],
     )
 
     assert selected == []
-    assert skipped == ["you-research: missing YOU_API_KEY"]
+    assert skipped == ["deep-research-you: missing YOU_API_KEY"]
 
 
 def test_select_ready_skills_requires_jina_env(monkeypatch):
     monkeypatch.delenv("JINA_API_KEY", raising=False)
 
     selected, skipped = live_smoke.select_ready_skills(
-        ["jina-ai"],
-        available_skills=["jina-ai"],
+        ["deep-research-jina"],
+        available_skills=["deep-research-jina"],
     )
 
     assert selected == []
-    assert skipped == ["jina-ai: missing JINA_API_KEY"]
+    assert skipped == ["deep-research-jina: missing JINA_API_KEY"]
 
 
 def test_select_ready_skills_reports_undiscovered_skill():
@@ -55,10 +55,10 @@ def test_select_ready_skills_reports_undiscovered_skill():
 def test_select_ready_skills_can_fail_on_missing_env(monkeypatch):
     monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
 
-    with pytest.raises(RuntimeError, match="gemini-deep-research: missing GOOGLE_API_KEY"):
+    with pytest.raises(RuntimeError, match="deep-research-gemini: missing GOOGLE_API_KEY"):
         live_smoke.select_ready_skills(
-            ["gemini-deep-research"],
-            available_skills=["gemini-deep-research"],
+            ["deep-research-gemini"],
+            available_skills=["deep-research-gemini"],
             fail_missing_env=True,
         )
 

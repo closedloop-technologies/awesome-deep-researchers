@@ -111,19 +111,19 @@ size. It is not a human preference score.
 
 | API / Provider | Env field | Skill | Verified live smoke | Latest cost | Quality proxy |
 | --- | --- | --- | --- | ---: | --- |
-| Gemini grounded research | `GOOGLE_API_KEY`, optional `GOOGLE_CLOUD_PROJECT` | `gemini-deep-research` | Yes, 2026-06-23 | `$0.0034` | OKF valid; 5,679 tokens / 22,587 chars |
-| Perplexity Sonar | `PERPLEXITY_API_KEY` | `perplexity-sonar` | Yes, 2026-06-23 | `$0.0072` | OKF valid; 2,269 tokens / 8,944 chars |
-| You.com Research | `YOU_API_KEY` | `you-research` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 435 tokens / 1,610 chars |
-| Tavily Search | `TAVILY_API_KEY` | `tavily-search` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 563 tokens / 2,122 chars |
-| Exa Search | `EXA_API_KEY` | `exa-research` | Yes, 2026-06-23 | `$0.0111` | OKF valid; 3,732 tokens / 14,797 chars |
-| Jina Reader/Search | `JINA_API_KEY` | `jina-ai` | Yes, 2026-06-23 | `$0.2856` | OKF valid; 95,219 tokens / 380,746 chars |
-| OpenAI Deep Research | `OPENAI_API_KEY` | `openai-deep-research` | Not yet live-smoked in this repo | n/a | Skill and env path present |
-| xAI Grok | `XAI_API_KEY` | `xai-grok` | Not yet live-smoked in this repo | n/a | Skill and env path present |
-| You.com Finance Research | `YOU_API_KEY` | `you-research` with `--api finance` | Not in under-`$1` smoke suite | n/a | Domain-specific skill path present |
-| GPT Researcher | `OPENAI_API_KEY`, `TAVILY_API_KEY` | `gpt-researcher` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
-| LangChain Open Deep Research | `OPENAI_API_KEY`, optional model/search keys | `langchain-deep-research` | Not yet live-smoked in this repo | n/a | OSS framework skill present; server workflow |
-| Stanford STORM | `OPENAI_API_KEY`, `YDC_API_KEY` or `BING_SEARCH_API_KEY` | `stanford-storm` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
-| Smolagents | `OPENAI_API_KEY`, optional `HF_TOKEN` | `smolagents` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| Gemini grounded research | `GOOGLE_API_KEY`, optional `GOOGLE_CLOUD_PROJECT` | `deep-research-gemini` | Yes, 2026-06-23 | `$0.0034` | OKF valid; 5,679 tokens / 22,587 chars |
+| Perplexity Sonar | `PERPLEXITY_API_KEY` | `deep-research-perplexity` | Yes, 2026-06-23 | `$0.0072` | OKF valid; 2,269 tokens / 8,944 chars |
+| You.com Research | `YOU_API_KEY` | `deep-research-you` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 435 tokens / 1,610 chars |
+| Tavily Search | `TAVILY_API_KEY` | `deep-research-tavily` | Yes, 2026-06-23 | `$0.0016` | OKF valid; 563 tokens / 2,122 chars |
+| Exa Search | `EXA_API_KEY` | `deep-research-exa` | Yes, 2026-06-23 | `$0.0111` | OKF valid; 3,732 tokens / 14,797 chars |
+| Jina Reader/Search | `JINA_API_KEY` | `deep-research-jina` | Yes, 2026-06-23 | `$0.2856` | OKF valid; 95,219 tokens / 380,746 chars |
+| OpenAI Deep Research | `OPENAI_API_KEY` | `deep-research-openai` | Not yet live-smoked in this repo | n/a | Skill and env path present |
+| xAI Grok | `XAI_API_KEY` | `deep-research-xai-grok` | Not yet live-smoked in this repo | n/a | Skill and env path present |
+| You.com Finance Research | `YOU_API_KEY` | `deep-research-you` with `--api finance` | Not in under-`$1` smoke suite | n/a | Domain-specific skill path present |
+| GPT Researcher | `OPENAI_API_KEY`, `TAVILY_API_KEY` | `deep-research-gpt-researcher` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| LangChain Open Deep Research | `OPENAI_API_KEY`, optional model/search keys | `deep-research-langchain` | Not yet live-smoked in this repo | n/a | OSS framework skill present; server workflow |
+| Stanford STORM | `OPENAI_API_KEY`, `YDC_API_KEY` or `BING_SEARCH_API_KEY` | `deep-research-stanford-storm` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
+| Smolagents | `OPENAI_API_KEY`, optional `HF_TOKEN` | `deep-research-smolagents` | Not yet live-smoked in this repo | n/a | OSS framework skill present |
 
 Live smoke reports are written under `/tmp/adr-live-*-smoke/` during local
 verification. Re-run them with:
@@ -189,7 +189,7 @@ This repo is also structured as a Codex Plugin via
 - provider-specific skills document OpenAI, Gemini, Perplexity, xAI, You.com,
   Exa, Tavily, Jina, GPT Researcher, LangChain Open Deep Research, STORM, and
   Smolagents call patterns.
-- `okf-normalize-research` converts raw deep research reports into a small
+- `deep-research-okf-normalize` converts raw deep research reports into a small
   Open Knowledge Format-style markdown bundle.
 
 Normalization guidance is in `docs/okf-normalization.md`. Canonical low-cost
@@ -221,16 +221,16 @@ workflows can use `.agents/skills/`.
 
 | Skill Name | Type | Description |
 |------------|------|-------------|
-| [perplexity-sonar](skills/perplexity-sonar) | Commercial API | Real-time, citation-backed answers using Perplexity Sonar API |
-| [xai-grok](skills/xai-grok) | Commercial API | Real-time web and X (Twitter) search with Grok Agent Tools |
-| [exa-research](skills/exa-research) | Commercial API | Neural search, content retrieval, and automated research |
-| [tavily-search](skills/tavily-search) | Commercial API | LLM-optimized real-time web search for RAG applications |
-| [jina-ai](skills/jina-ai) | Commercial API | URL to Markdown conversion and web search |
-| [gpt-researcher](skills/gpt-researcher) | Open Source | Autonomous research agent for comprehensive reports |
-| [stanford-storm](skills/stanford-storm) | Open Source | Wikipedia-style article generation with citations |
-| [openai-deep-research](skills/openai-deep-research) | Commercial API | Launch OpenAI Deep Research (o3/o4) autonomous research runs |
-| [langchain-deep-research](skills/langchain-deep-research) | Open Source | Iterative research with reflection and knowledge gap analysis |
-| [smolagents](skills/smolagents) | Open Source | Code-based agentic framework with 30% token efficiency gain |
+| [deep-research-perplexity](skills/deep-research-perplexity) | Commercial API | Real-time, citation-backed answers using Perplexity Sonar API |
+| [deep-research-xai-grok](skills/deep-research-xai-grok) | Commercial API | Real-time web and X (Twitter) search with Grok Agent Tools |
+| [deep-research-exa](skills/deep-research-exa) | Commercial API | Neural search, content retrieval, and automated research |
+| [deep-research-tavily](skills/deep-research-tavily) | Commercial API | LLM-optimized real-time web search for RAG applications |
+| [deep-research-jina](skills/deep-research-jina) | Commercial API | URL to Markdown conversion and web search |
+| [deep-research-gpt-researcher](skills/deep-research-gpt-researcher) | Open Source | Autonomous research agent for comprehensive reports |
+| [deep-research-stanford-storm](skills/deep-research-stanford-storm) | Open Source | Wikipedia-style article generation with citations |
+| [deep-research-openai](skills/deep-research-openai) | Commercial API | Launch OpenAI Deep Research (o3/o4) autonomous research runs |
+| [deep-research-langchain](skills/deep-research-langchain) | Open Source | Iterative research with reflection and knowledge gap analysis |
+| [deep-research-smolagents](skills/deep-research-smolagents) | Open Source | Code-based agentic framework with 30% token efficiency gain |
 
 ### Installation
 
@@ -270,7 +270,7 @@ Run agent skills without the IDE using the `adr` CLI (exposed via `python -m awe
 
    # Run a headless research job and store the result in outputs/
    python -m awesome_deep_research.cli run \
-     --skill perplexity-sonar \
+     --skill deep-research-perplexity \
      --prompt-id domain-mapping-01 \
      --output-dir outputs
    ```

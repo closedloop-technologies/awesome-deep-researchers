@@ -49,7 +49,7 @@ details. Store secrets in 1Password and run commands with `op run`:
 
 ```bash
 op run --env-file .env.adr -- python benchmark/run_benchmark.py \
-  --skills perplexity-sonar \
+  --skills deep-research-perplexity \
   --categories "Source Retrieval" \
   --max-questions 1 \
   -v

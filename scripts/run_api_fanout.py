@@ -26,14 +26,14 @@ from benchmark.utils import discover_skills, get_skill_command_info
 
 
 DEFAULT_API_PROVIDERS = [
-    "gemini-deep-research",
-    "perplexity-sonar",
-    "you-research",
-    "tavily-search",
-    "jina-ai",
-    "exa-research",
-    "openai-deep-research",
-    "xai-grok",
+    "deep-research-gemini",
+    "deep-research-perplexity",
+    "deep-research-you",
+    "deep-research-tavily",
+    "deep-research-jina",
+    "deep-research-exa",
+    "deep-research-openai",
+    "deep-research-xai-grok",
 ]
 
 
@@ -103,7 +103,7 @@ def command_for_provider(provider: str, prompt: str, skills: Mapping[str, Mappin
         argv[0] = sys.executable
 
     # Keep OpenAI fan-out runs on the lowest available effort tier.
-    if provider == "openai-deep-research" and "--effort" not in argv:
+    if provider == "deep-research-openai" and "--effort" not in argv:
         argv.extend(["--effort", "low"])
 
     return argv

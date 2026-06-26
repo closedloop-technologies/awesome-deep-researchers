@@ -42,7 +42,7 @@ def test_fanout_writes_response_files_and_summary(monkeypatch, tmp_path):
             "--output-dir",
             str(tmp_path),
             "--providers",
-            "tavily-search,exa-research",
+            "deep-research-tavily,deep-research-exa",
             "compare deep research providers",
         ],
     )
@@ -52,12 +52,12 @@ def test_fanout_writes_response_files_and_summary(monkeypatch, tmp_path):
     run_dirs = list(tmp_path.iterdir())
     assert len(run_dirs) == 1
     run_dir = run_dirs[0]
-    assert (run_dir / "tavily-search.response.txt").read_text(encoding="utf-8") == "tavily response"
-    assert (run_dir / "exa-research.response.txt").read_text(encoding="utf-8") == "exa response"
+    assert (run_dir / "deep-research-tavily.response.txt").read_text(encoding="utf-8") == "tavily response"
+    assert (run_dir / "deep-research-exa.response.txt").read_text(encoding="utf-8") == "exa response"
 
     summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["prompt"] == "compare deep research providers"
-    assert {result["provider"] for result in summary["results"]} == {"tavily-search", "exa-research"}
+    assert {result["provider"] for result in summary["results"]} == {"deep-research-tavily", "deep-research-exa"}
     assert all(result["returncode"] == 0 for result in summary["results"])
 
 
@@ -77,7 +77,7 @@ def test_fanout_skips_missing_env_without_running_provider(monkeypatch, tmp_path
             "--output-dir",
             str(tmp_path),
             "--providers",
-            "perplexity-sonar",
+            "deep-research-perplexity",
             "test prompt",
         ],
     )
@@ -86,13 +86,13 @@ def test_fanout_skips_missing_env_without_running_provider(monkeypatch, tmp_path
 
     run_dir = next(tmp_path.iterdir())
     summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
-    assert summary["results"][0]["provider"] == "perplexity-sonar"
+    assert summary["results"][0]["provider"] == "deep-research-perplexity"
     assert summary["results"][0]["skipped"] is True
-    assert "PERPLEXITY_API_KEY" in (run_dir / "perplexity-sonar.stderr.txt").read_text(encoding="utf-8")
+    assert "PERPLEXITY_API_KEY" in (run_dir / "deep-research-perplexity.stderr.txt").read_text(encoding="utf-8")
 
 
 def test_parse_providers_rejects_duplicates():
     fanout = load_fanout_module()
 
-    with pytest.raises(ValueError, match="duplicate providers: tavily-search"):
-        fanout.parse_providers(["tavily-search,exa-research", "tavily-search"])
+    with pytest.raises(ValueError, match="duplicate providers: deep-research-tavily"):
+        fanout.parse_providers(["deep-research-tavily,deep-research-exa", "deep-research-tavily"])

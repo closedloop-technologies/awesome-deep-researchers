@@ -72,7 +72,7 @@ def test_readme_mentions_op_env_checker():
 def test_custom_data_source_guide_covers_requested_sources():
     guide = (audit.REPO_ROOT / "docs" / "custom-data-sources.md").read_text(encoding="utf-8")
     skill = (
-        audit.REPO_ROOT / ".agents" / "skills" / "custom-data-deep-research" / "SKILL.md"
+        audit.REPO_ROOT / ".agents" / "skills" / "deep-research-custom-data" / "SKILL.md"
     ).read_text(encoding="utf-8")
 
     for term in ["Google Docs", "YouTube", "Local files", "S3", "arXiv"]:

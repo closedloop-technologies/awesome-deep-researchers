@@ -21,12 +21,12 @@ def test_load_prompt_examples_contains_expected_ids():
 
 
 def test_next_output_path_increments(tmp_path: Path):
-    first = cli.next_output_path(tmp_path, "perplexity-sonar")
-    assert first.name == "OUTPUT-PERPLEXITY-SONAR-0001.md"
+    first = cli.next_output_path(tmp_path, "deep-research-perplexity")
+    assert first.name == "OUTPUT-DEEP-RESEARCH-PERPLEXITY-0001.md"
     first.write_text("dummy", encoding="utf-8")
 
-    second = cli.next_output_path(tmp_path, "perplexity-sonar")
-    assert second.name == "OUTPUT-PERPLEXITY-SONAR-0002.md"
+    second = cli.next_output_path(tmp_path, "deep-research-perplexity")
+    assert second.name == "OUTPUT-DEEP-RESEARCH-PERPLEXITY-0002.md"
 
 
 def test_next_output_path_rejects_blank_skill_names(tmp_path: Path):
@@ -40,17 +40,17 @@ def test_next_output_path_rejects_punctuation_only_skill_names(tmp_path: Path):
 
 
 def test_next_output_path_trims_generated_tokens(tmp_path: Path):
-    output_path = cli.next_output_path(tmp_path, "-perplexity-sonar-")
+    output_path = cli.next_output_path(tmp_path, "-deep-research-perplexity-")
 
-    assert output_path.name == "OUTPUT-PERPLEXITY-SONAR-0001.md"
+    assert output_path.name == "OUTPUT-DEEP-RESEARCH-PERPLEXITY-0001.md"
 
 
 def test_load_skill_infos_includes_agents_documentation_skills():
     skills = cli.load_skill_infos(include_documentation=True)
 
-    assert "gemini-deep-research" in skills
-    assert skills["gemini-deep-research"].source == "agents"
-    assert skills["gemini-deep-research"].runnable is True
+    assert "deep-research-gemini" in skills
+    assert skills["deep-research-gemini"].source == "agents"
+    assert skills["deep-research-gemini"].runnable is True
 
 
 def test_load_skill_infos_falls_back_to_packaged_plugin_skills(tmp_path: Path, monkeypatch):
@@ -80,8 +80,8 @@ def test_load_skill_infos_falls_back_to_packaged_plugin_skills(tmp_path: Path, m
 def test_load_skills_only_returns_runnable_skills():
     skills = cli.load_skills()
 
-    assert "okf-normalize-research" in skills
-    assert "gemini-deep-research" in skills
+    assert "deep-research-okf-normalize" in skills
+    assert "deep-research-gemini" in skills
 
 
 def test_list_skills_command_shows_source_and_runnable_state(capsys):
@@ -89,8 +89,8 @@ def test_list_skills_command_shows_source_and_runnable_state(capsys):
     output = capsys.readouterr().out
 
     assert result == 0
-    assert "gemini-deep-research\tagents\trunnable" in output
-    assert "okf-normalize-research\tagents\trunnable" in output
+    assert "deep-research-gemini\tagents\trunnable" in output
+    assert "deep-research-okf-normalize\tagents\trunnable" in output
 
 
 def test_build_user_prompt_includes_extra_instructions():

@@ -1,6 +1,6 @@
 ---
 name: deep-research-api-calls
-description: Call or prepare calls to deep research APIs with explicit cost limits, API-key sources, benchmark prompts, and output capture.
+description: Prepare and run bounded calls across deep research provider APIs with explicit cost limits, API-key sources, benchmark prompts, and output capture. Use when comparing providers, creating reproducible API commands, or normalizing raw provider outputs after a research run.
 ---
 
 # Deep Research API Calls
@@ -42,12 +42,12 @@ Expected environment names:
 
 | Provider | Typical Command | Budget Controls |
 | --- | --- | --- |
-| OpenAI Deep Research | `python .agents/skills/openai-deep-research/scripts/run_deep_research.py --prompt "$PROMPT"` | prefer mini/deep-research model, cap output, short prompt |
-| Perplexity Sonar Deep Research | `python .agents/skills/perplexity-sonar/scripts/ask.py --prompt "$PROMPT"` | use low search/context mode where available |
-| Exa Research | `python .agents/skills/exa-research/scripts/exa_tools.py search "$PROMPT" --num-results 5 --highlights` | use search for benchmark smokes; reserve research mode for deeper runs |
-| Tavily Search | `python .agents/skills/tavily-search/scripts/tavily_search.py --query "$PROMPT"` | cap results and include answer mode only when needed |
-| Jina AI | `python .agents/skills/jina-ai/scripts/jina_tools.py search "$PROMPT"` | cap result count and fetched pages |
-| xAI Grok | `python .agents/skills/xai-grok/scripts/grok_research.py --query "$PROMPT"` | use economical model and cap output |
+| OpenAI Deep Research | `python .agents/skills/deep-research-openai/scripts/run_deep_research.py --prompt "$PROMPT"` | prefer mini/deep-research model, cap output, short prompt |
+| Perplexity Sonar Deep Research | `python .agents/skills/deep-research-perplexity/scripts/ask.py --prompt "$PROMPT"` | use low search/context mode where available |
+| Exa Research | `python .agents/skills/deep-research-exa/scripts/exa_tools.py search "$PROMPT" --num-results 5 --highlights` | use search for benchmark smokes; reserve research mode for deeper runs |
+| Tavily Search | `python .agents/skills/deep-research-tavily/scripts/tavily_search.py --query "$PROMPT"` | cap results and include answer mode only when needed |
+| Jina AI | `python .agents/skills/deep-research-jina/scripts/jina_tools.py search "$PROMPT"` | cap result count and fetched pages |
+| xAI Grok | `python .agents/skills/deep-research-xai-grok/scripts/grok_research.py --query "$PROMPT"` | use economical model and cap output |
 | You.com ARI | provider-specific ARI endpoint wrapper | avoid high-cost professional report mode for benchmark calls |
 | Google Gemini Deep Research | Gemini API or UI workflow where available | cap grounding/search effort and output tokens |
 
@@ -64,5 +64,5 @@ Use short prompts that still exercise multi-step behavior:
 
 ## Output Contract
 
-Save raw provider output first. Then normalize it with `okf-normalize-research`
+Save raw provider output first. Then normalize it with `deep-research-okf-normalize`
 so reports can be compared as markdown concepts with citations.

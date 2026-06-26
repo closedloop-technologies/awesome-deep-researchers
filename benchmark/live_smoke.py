@@ -17,24 +17,24 @@ from benchmark.utils import discover_skills
 
 
 DEFAULT_LIVE_SKILLS = [
-    "you-research",
-    "gemini-deep-research",
-    "tavily-search",
-    "jina-ai",
+    "deep-research-you",
+    "deep-research-gemini",
+    "deep-research-tavily",
+    "deep-research-jina",
 ]
 
 REQUIRED_ENV_BY_SKILL: Dict[str, Sequence[str]] = {
-    "you-research": ["YOU_API_KEY"],
-    "gemini-deep-research": ["GOOGLE_API_KEY"],
-    "tavily-search": ["TAVILY_API_KEY"],
-    "jina-ai": ["JINA_API_KEY"],
-    "perplexity-sonar": ["PERPLEXITY_API_KEY"],
-    "exa-research": ["EXA_API_KEY"],
-    "openai-deep-research": ["OPENAI_API_KEY"],
-    "xai-grok": ["XAI_API_KEY"],
-    "gpt-researcher": ["OPENAI_API_KEY", "TAVILY_API_KEY"],
-    "smolagents": ["OPENAI_API_KEY"],
-    "stanford-storm": ["OPENAI_API_KEY", "YDC_API_KEY"],
+    "deep-research-you": ["YOU_API_KEY"],
+    "deep-research-gemini": ["GOOGLE_API_KEY"],
+    "deep-research-tavily": ["TAVILY_API_KEY"],
+    "deep-research-jina": ["JINA_API_KEY"],
+    "deep-research-perplexity": ["PERPLEXITY_API_KEY"],
+    "deep-research-exa": ["EXA_API_KEY"],
+    "deep-research-openai": ["OPENAI_API_KEY"],
+    "deep-research-xai-grok": ["XAI_API_KEY"],
+    "deep-research-gpt-researcher": ["OPENAI_API_KEY", "TAVILY_API_KEY"],
+    "deep-research-smolagents": ["OPENAI_API_KEY"],
+    "deep-research-stanford-storm": ["OPENAI_API_KEY", "YDC_API_KEY"],
 }
 
 
