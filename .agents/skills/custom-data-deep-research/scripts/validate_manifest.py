@@ -38,6 +38,12 @@ TYPE_REQUIRED = {
 }
 
 
+def is_safe_relative_path(value: str) -> bool:
+    return not Path(value).is_absolute() and all(
+        part not in {"", ".", ".."} for part in value.split("/")
+    )
+
+
 def load_manifest(path: Path) -> Dict[str, Any]:
     with path.open(encoding="utf-8") as handle:
         return json.load(handle)
@@ -63,6 +69,16 @@ def validate_source(source: Dict[str, Any], index: int) -> List[str]:
     anchors = source.get("anchors", [])
     if anchors is not None and not isinstance(anchors, list):
         errors.append(f"{label}: anchors must be a list when provided")
+
+    if source_type in {"local_file", "csv"}:
+        path_value = source.get("path")
+        if path_value and not is_safe_relative_path(str(path_value)):
+            errors.append(f"{label}: path must be a safe relative path")
+
+    if source_type == "s3":
+        key_value = source.get("key")
+        if key_value and not is_safe_relative_path(str(key_value)):
+            errors.append(f"{label}: key must be a safe relative path")
 
     return errors
 
