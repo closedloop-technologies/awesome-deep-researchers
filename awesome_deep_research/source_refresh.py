@@ -21,6 +21,7 @@ DATE_RE = re.compile(r"^Last refreshed:\s*(\d{4}-\d{2}-\d{2})\.", re.MULTILINE)
 ROW_RE = re.compile(r"^\|\s*`([^`]*)`\s*\|\s*([^|]*?)\s*\|", re.MULTILINE)
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 ENCODED_PATH_SEPARATOR_RE = re.compile(r"%2f|%5c", re.IGNORECASE)
+MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 
 
 @dataclass
@@ -72,6 +73,10 @@ def has_encoded_whitespace(value: str) -> bool:
     return any(character.isspace() for character in decoded)
 
 
+def has_malformed_percent_encoding(value: str) -> bool:
+    return bool(MALFORMED_PERCENT_ENCODING_RE.search(value))
+
+
 def has_trailing_host_dot(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and bool(parsed.hostname) and parsed.hostname.endswith(".")
@@ -104,6 +109,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} must not contain encoded whitespace",
+        )
+    if has_malformed_percent_encoding(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} must not contain malformed percent encoding",
         )
     if has_encoded_control_character(entry.source):
         return CheckResult(
