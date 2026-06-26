@@ -96,6 +96,14 @@ def has_percent_encoded_host(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and "%" in parsed.netloc
 
 
+def has_valid_url_port(url: str) -> bool:
+    try:
+        urlparse(url).port
+    except ValueError:
+        return False
+    return True
+
+
 def has_remote_parent_directory_reference(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and ".." in Path(unquote(parsed.path)).parts
@@ -153,6 +161,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} host must not end with a dot",
+        )
+    if parsed.scheme in {"http", "https"} and not has_valid_url_port(entry.source):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL port must be numeric and in range",
         )
     if parsed.scheme in {"http", "https"} and "\\" in entry.source:
         return CheckResult(
@@ -425,6 +438,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} host must not end with a dot",
+            )
+        if not has_valid_url_port(entry.source):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL port must be numeric and in range",
             )
         if "\\" in entry.source:
             return CheckResult(
