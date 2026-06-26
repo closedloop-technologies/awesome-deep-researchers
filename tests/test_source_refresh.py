@@ -604,6 +604,35 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_remote_repeated_path_separators(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/docs//source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/docs//source.md "
+            "URL path must not contain repeated separators"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_encoded_control_characters(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -898,6 +927,35 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_local_source_paths_with_repeated_separators(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs//source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: docs//source.md "
+            "local source must not contain repeated separators"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_stale_index():
     results = source_refresh.check_source_index(max_age_days=30, today=date(2026, 8, 1))
 
@@ -1019,6 +1077,16 @@ def test_local_source_link_rejects_encoded_current_directory_sources(tmp_path):
 
     assert result.ok is False
     assert "must not contain current directory references" in result.message
+
+
+def test_local_source_link_rejects_repeated_path_separators(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs//source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain repeated separators" in result.message
 
 
 def test_source_link_rejects_unsupported_url_schemes(tmp_path):
@@ -1172,6 +1240,23 @@ def test_source_link_rejects_remote_backslash_paths_before_request(monkeypatch, 
 
     assert result.ok is False
     assert "URL path must use forward slashes" in result.message
+
+
+def test_source_link_rejects_remote_repeated_path_separators_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/docs//source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL path must not contain repeated separators" in result.message
 
 
 def test_source_link_rejects_encoded_control_characters_before_request(monkeypatch, tmp_path):

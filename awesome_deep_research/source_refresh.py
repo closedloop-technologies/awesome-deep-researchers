@@ -90,6 +90,10 @@ def has_current_directory_reference(value: str) -> bool:
     return "." in decoded_path_segments(value)
 
 
+def has_repeated_path_separator(value: str) -> bool:
+    return "//" in value
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
@@ -125,6 +129,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} URL path must use forward slashes",
+        )
+    if parsed.scheme in {"http", "https"} and has_repeated_path_separator(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not contain repeated separators",
         )
     if parsed.scheme in {"http", "https"} and ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
         return CheckResult(
@@ -168,6 +177,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must use forward slashes",
+        )
+    if not parsed.scheme and has_repeated_path_separator(local_path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain repeated separators",
         )
     if not parsed.scheme and Path(local_path).is_absolute():
         return CheckResult(
@@ -356,6 +370,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} URL path must use forward slashes",
             )
+        if has_repeated_path_separator(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not contain repeated separators",
+            )
         if ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
             return CheckResult(
                 False,
@@ -407,6 +426,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must use forward slashes",
+        )
+    if has_repeated_path_separator(local_source_path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain repeated separators",
         )
     if Path(local_source_path).is_absolute():
         return CheckResult(False, f"{entry.skill}: {entry.source} must be repo-relative")
