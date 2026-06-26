@@ -1,6 +1,6 @@
 {
   "name": "awesome-deep-researchers",
-  "version": "0.1.0",
+  "version": "0.1.0+codex.20260626135956",
   "description": "Codex skills and benchmark guidance for evaluating deep research agents and normalizing their outputs.",
   "author": {
     "name": "Awesome Deep Researchers Contributors",
@@ -17,6 +17,7 @@
     "codex-skills"
   ],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Awesome Deep Researchers",
     "shortDescription": "Run and evaluate deep research agents.",
