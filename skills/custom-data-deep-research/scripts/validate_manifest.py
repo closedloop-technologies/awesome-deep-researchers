@@ -76,6 +76,8 @@ def is_safe_relative_path(value: str) -> bool:
         return False
     if "\\" in value:
         return False
+    if "?" in value or "#" in value:
+        return False
     if any(character.isspace() for character in value):
         return False
     if any(ord(character) < 32 or ord(character) == 127 for character in value):
@@ -87,6 +89,8 @@ def is_safe_relative_path(value: str) -> bool:
     if any(ord(character) < 32 or ord(character) == 127 for character in decoded_value):
         return False
     if "\\" in decoded_value:
+        return False
+    if "?" in decoded_value or "#" in decoded_value:
         return False
     if decoded_value.split("/") != value.split("/"):
         return False

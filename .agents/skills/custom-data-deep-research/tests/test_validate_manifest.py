@@ -98,9 +98,13 @@ def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("docs/my report.pdf") is False
     assert is_safe_relative_path("docs/report\tcopy.pdf") is False
     assert is_safe_relative_path("docs/report\x7f.pdf") is False
+    assert is_safe_relative_path("docs/report.pdf?download=1") is False
+    assert is_safe_relative_path("docs/report.pdf#page=2") is False
     assert is_safe_relative_path("docs/%2e%2e/report.pdf") is False
     assert is_safe_relative_path("docs%2freport.pdf") is False
     assert is_safe_relative_path("docs%5creport.pdf") is False
+    assert is_safe_relative_path("docs/report%3fdownload.pdf") is False
+    assert is_safe_relative_path("docs/report%23page.pdf") is False
     assert is_safe_relative_path("docs/report%2epdf") is False
     assert is_safe_relative_path("docs/report%zz.pdf") is False
 
