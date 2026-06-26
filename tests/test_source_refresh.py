@@ -549,18 +549,25 @@ Last refreshed: 2026-06-23.
         ), source_refresh.format_results(results)
 
 
-def test_source_index_checker_fails_malformed_remote_ports(tmp_path):
+@pytest.mark.parametrize(
+    "source",
+    [
+        "https://example.com:bad/source.md",
+        "https://example.com:/source.md",
+    ],
+)
+def test_source_index_checker_fails_malformed_remote_ports(tmp_path, source):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
     index_path = skills_root / "provider-source-index.md"
     index_path.write_text(
-        """# Provider Source Index
+        f"""# Provider Source Index
 
 Last refreshed: 2026-06-23.
 
 | Skill | Source |
 | --- | --- |
-| `example-skill` | https://example.com:bad/source.md |
+| `example-skill` | {source} |
 """,
         encoding="utf-8",
     )
@@ -570,8 +577,7 @@ Last refreshed: 2026-06-23.
     assert any(
         not result.ok
         and (
-            "example-skill: https://example.com:bad/source.md "
-            "URL port must be numeric and in range"
+            f"example-skill: {source} URL port must be numeric and in range"
         )
         in result.message
         for result in results
