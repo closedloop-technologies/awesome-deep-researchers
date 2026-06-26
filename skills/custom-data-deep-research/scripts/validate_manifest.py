@@ -66,7 +66,8 @@ def has_valid_hostname_syntax(hostname: str) -> bool:
     try:
         ipaddress.ip_address(hostname)
     except ValueError:
-        return all(HOST_LABEL_RE.fullmatch(label) for label in hostname.split("."))
+        labels = hostname.split(".")
+        return len(labels) >= 2 and all(HOST_LABEL_RE.fullmatch(label) for label in labels)
     return True
 
 
