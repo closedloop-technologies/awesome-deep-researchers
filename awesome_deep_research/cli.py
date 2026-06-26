@@ -267,6 +267,14 @@ def ensure_output_dir(path: Optional[str]) -> Path:
     if path is not None:
         if not path.strip():
             raise ValueError("--output-dir must be a non-empty path.")
+        if path != path.strip():
+            raise ValueError("--output-dir must be trimmed.")
+        if "\\" in path:
+            raise ValueError("--output-dir must use forward slashes.")
+        if any(ord(character) < 32 or ord(character) == 127 for character in path):
+            raise ValueError("--output-dir must not contain control characters.")
+        if any(part in {".", ".."} for part in path.split("/")):
+            raise ValueError("--output-dir must not contain dot path segments.")
         requested_dir = Path(path)
         output_dir = requested_dir if requested_dir.is_absolute() else REPO_ROOT / requested_dir
     else:
