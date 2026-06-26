@@ -65,19 +65,38 @@ def normalized_skill_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-")
 
 
+def fully_unquote(value: str) -> str:
+    decoded = value
+    for _ in range(5):
+        next_value = unquote(decoded)
+        if next_value == decoded:
+            return decoded
+        decoded = next_value
+    return decoded
+
+
 def has_encoded_control_character(value: str) -> bool:
-    decoded = unquote(value)
+    decoded = fully_unquote(value)
     return any(ord(character) < 32 or ord(character) == 127 for character in decoded)
 
 
 def has_encoded_whitespace(value: str) -> bool:
-    decoded = unquote(value)
+    decoded = fully_unquote(value)
     return any(character.isspace() for character in decoded)
 
 
 def has_encoded_query_or_fragment_marker(value: str) -> bool:
-    decoded = unquote(value)
+    decoded = fully_unquote(value)
     return decoded != value and ("?" in decoded or "#" in decoded)
+
+
+def has_encoded_path_separator(value: str) -> bool:
+    decoded = fully_unquote(value)
+    return (
+        bool(ENCODED_PATH_SEPARATOR_RE.search(value))
+        or ("\\" in decoded and "\\" not in value)
+        or len(decoded.split("/")) != len(value.split("/"))
+    )
 
 
 def has_encoded_path_alias(value: str) -> bool:
@@ -138,11 +157,13 @@ def has_valid_url_port(url: str) -> bool:
 
 def has_remote_parent_directory_reference(url: str) -> bool:
     parsed = urlparse(url)
-    return parsed.scheme in {"http", "https"} and ".." in Path(unquote(parsed.path)).parts
+    return parsed.scheme in {"http", "https"} and ".." in Path(
+        fully_unquote(parsed.path)
+    ).parts
 
 
 def decoded_path_segments(value: str) -> list[str]:
-    return unquote(value).split("/")
+    return fully_unquote(value).split("/")
 
 
 def has_current_directory_reference(value: str) -> bool:
@@ -233,7 +254,7 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} URL path must not contain repeated separators",
         )
-    if parsed.scheme in {"http", "https"} and ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+    if parsed.scheme in {"http", "https"} and has_encoded_path_separator(parsed.path):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} URL path must not encode path separators",
@@ -272,7 +293,7 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} local source must not include query parameters",
         )
-    if not parsed.scheme and ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+    if not parsed.scheme and has_encoded_path_separator(parsed.path):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not encode path separators",
@@ -282,7 +303,7 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} local source must not encode query or fragment markers",
         )
-    local_path = unquote(parsed.path) if not parsed.scheme else entry.source
+    local_path = fully_unquote(parsed.path) if not parsed.scheme else entry.source
     if not parsed.scheme and not local_path:
         return CheckResult(
             False,
@@ -533,7 +554,7 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} URL path must not contain repeated separators",
             )
-        if ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+        if has_encoded_path_separator(parsed.path):
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} URL path must not encode path separators",
@@ -582,7 +603,7 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             False,
             f"{entry.skill}: {entry.source} local source must not include query parameters",
         )
-    if ENCODED_PATH_SEPARATOR_RE.search(parsed.path):
+    if has_encoded_path_separator(parsed.path):
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not encode path separators",
@@ -592,7 +613,7 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             False,
             f"{entry.skill}: {entry.source} local source must not encode query or fragment markers",
         )
-    local_source_path = unquote(parsed.path)
+    local_source_path = fully_unquote(parsed.path)
     if not local_source_path:
         return CheckResult(False, f"{entry.skill}: {entry.source} local source must include a path")
     if "\\" in local_source_path:

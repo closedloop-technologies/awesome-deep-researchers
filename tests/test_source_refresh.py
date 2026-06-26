@@ -726,6 +726,35 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_remote_nested_encoded_path_separators(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/docs%252Fsource.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/docs%252Fsource.md "
+            "URL path must not encode path separators"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_remote_encoded_query_fragment_markers(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -748,6 +777,37 @@ Last refreshed: 2026-06-23.
         not result.ok
         and (
             "example-skill: https://example.com/docs%23source.md "
+            "URL path must not encode query or fragment markers"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_remote_nested_encoded_query_fragment_markers(
+    tmp_path,
+):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/docs%2523source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/docs%2523source.md "
             "URL path must not encode query or fragment markers"
         )
         in result.message
@@ -1211,6 +1271,34 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_local_source_paths_with_nested_encoded_slashes(
+    tmp_path,
+):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs%252Fsource.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and "example-skill: docs%252Fsource.md local source must not encode path separators"
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_local_source_paths_with_encoded_markers(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -1233,6 +1321,37 @@ Last refreshed: 2026-06-23.
         not result.ok
         and (
             "example-skill: docs/source%3Fdownload.md "
+            "local source must not encode query or fragment markers"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
+def test_source_index_checker_fails_local_source_paths_with_nested_encoded_markers(
+    tmp_path,
+):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | docs/source%253Fdownload.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: docs/source%253Fdownload.md "
             "local source must not encode query or fragment markers"
         )
         in result.message
@@ -1696,6 +1815,23 @@ def test_source_link_rejects_remote_encoded_path_separators_before_request(
     assert "URL path must not encode path separators" in result.message
 
 
+def test_source_link_rejects_remote_nested_encoded_path_separators_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/docs%252Fsource.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL path must not encode path separators" in result.message
+
+
 def test_source_link_rejects_remote_encoded_query_markers_before_request(
     monkeypatch, tmp_path
 ):
@@ -1706,6 +1842,23 @@ def test_source_link_rejects_remote_encoded_query_markers_before_request(
 
     result = source_refresh.check_link(
         source_refresh.SourceEntry("example-skill", "https://example.com/docs%3Fsource.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "URL path must not encode query or fragment markers" in result.message
+
+
+def test_source_link_rejects_remote_nested_encoded_query_markers_before_request(
+    monkeypatch, tmp_path
+):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/docs%253Fsource.md"),
         repo_root=tmp_path,
     )
 
@@ -1898,9 +2051,29 @@ def test_local_source_link_rejects_encoded_path_separators(tmp_path):
     assert "local source must not encode path separators" in result.message
 
 
+def test_local_source_link_rejects_nested_encoded_path_separators(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs%255Csource.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not encode path separators" in result.message
+
+
 def test_local_source_link_rejects_encoded_fragment_markers(tmp_path):
     result = source_refresh.check_link(
         source_refresh.SourceEntry("example-skill", "docs/source%23heading.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not encode query or fragment markers" in result.message
+
+
+def test_local_source_link_rejects_nested_encoded_fragment_markers(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source%2523heading.md"),
         repo_root=tmp_path,
     )
 
