@@ -138,6 +138,10 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://172.16.0.5/report") is False
     assert is_safe_http_url("https://192.168.1.5/report") is False
     assert is_safe_http_url("https://[fd00::1]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::7f00:1]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::a00:5]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::c0a8:105]/report") is False
+    assert is_safe_http_url("https://[64:ff9b::808:808]/report") is True
     assert is_safe_http_url("https://example.com./report") is False
     assert is_safe_http_url("https://%65xample.com/report") is False
     assert is_safe_http_url("https://bad_host.example/report") is False

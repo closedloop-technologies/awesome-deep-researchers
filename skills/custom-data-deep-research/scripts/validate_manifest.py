@@ -47,6 +47,7 @@ URL_FIELDS_BY_TYPE = {
 }
 MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 HOST_LABEL_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$", re.IGNORECASE)
+NAT64_WELL_KNOWN_PREFIX = ipaddress.IPv6Network("64:ff9b::/96")
 
 
 def parse_legacy_ipv4_address(hostname: str) -> ipaddress.IPv4Address | None:
@@ -58,6 +59,14 @@ def parse_legacy_ipv4_address(hostname: str) -> ipaddress.IPv4Address | None:
         return ipaddress.IPv4Address(packed_address)
     except ipaddress.AddressValueError:
         return None
+
+
+def normalize_host_ip(
+    host_ip: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
+    if isinstance(host_ip, ipaddress.IPv6Address) and host_ip in NAT64_WELL_KNOWN_PREFIX:
+        return ipaddress.IPv4Address(int(host_ip) & 0xFFFFFFFF)
+    return host_ip
 
 
 def has_valid_hostname_syntax(hostname: str) -> bool:
@@ -166,7 +175,7 @@ def is_safe_http_url(value: Any) -> bool:
     if hostname.endswith("."):
         return False
     try:
-        host_ip = ipaddress.ip_address(hostname)
+        host_ip = normalize_host_ip(ipaddress.ip_address(hostname))
     except ValueError:
         host_ip = parse_legacy_ipv4_address(hostname)
     if host_ip is not None and (
