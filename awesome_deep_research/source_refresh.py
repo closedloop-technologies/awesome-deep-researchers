@@ -73,6 +73,11 @@ def has_encoded_whitespace(value: str) -> bool:
     return any(character.isspace() for character in decoded)
 
 
+def has_encoded_query_or_fragment_marker(value: str) -> bool:
+    decoded = unquote(value)
+    return decoded != value and ("?" in decoded or "#" in decoded)
+
+
 def has_malformed_percent_encoding(value: str) -> bool:
     return bool(MALFORMED_PERCENT_ENCODING_RE.search(value))
 
@@ -160,6 +165,13 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} URL path must not encode path separators",
         )
+    if parsed.scheme in {"http", "https"} and has_encoded_query_or_fragment_marker(
+        parsed.path
+    ):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not encode query or fragment markers",
+        )
     if has_remote_parent_directory_reference(entry.source):
         return CheckResult(
             False,
@@ -186,6 +198,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not encode path separators",
+        )
+    if not parsed.scheme and has_encoded_query_or_fragment_marker(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not encode query or fragment markers",
         )
     local_path = unquote(parsed.path) if not parsed.scheme else entry.source
     if not parsed.scheme and not local_path:
@@ -410,6 +427,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} URL path must not encode path separators",
             )
+        if has_encoded_query_or_fragment_marker(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not encode query or fragment markers",
+            )
         if has_remote_parent_directory_reference(entry.source):
             return CheckResult(
                 False,
@@ -448,6 +470,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not encode path separators",
+        )
+    if has_encoded_query_or_fragment_marker(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not encode query or fragment markers",
         )
     local_source_path = unquote(parsed.path)
     if not local_source_path:
