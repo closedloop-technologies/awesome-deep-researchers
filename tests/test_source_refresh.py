@@ -656,6 +656,32 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_sources_with_encoded_whitespace(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/bad%20path |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and "example-skill: https://example.com/bad%20path must not contain encoded whitespace"
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_absolute_local_source_paths(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -1118,6 +1144,21 @@ def test_source_link_rejects_whitespace_urls_before_request(monkeypatch, tmp_pat
     assert "must not contain whitespace" in result.message
 
 
+def test_source_link_rejects_encoded_whitespace_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/bad%20path"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not contain encoded whitespace" in result.message
+
+
 def test_source_link_rejects_remote_backslash_paths_before_request(monkeypatch, tmp_path):
     def fail_request(*_args, **_kwargs):
         raise AssertionError("HTTP request should not run")
@@ -1203,3 +1244,17 @@ def test_local_source_link_rejects_encoded_path_separators(tmp_path):
 
     assert result.ok is False
     assert "local source must not encode path separators" in result.message
+
+
+def test_local_source_link_rejects_encoded_whitespace(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "source file.md").write_text("source", encoding="utf-8")
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source%20file.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not contain encoded whitespace" in result.message
