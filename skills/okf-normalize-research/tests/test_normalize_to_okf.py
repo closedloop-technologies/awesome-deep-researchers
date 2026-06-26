@@ -43,3 +43,27 @@ def test_validate_bundle_reports_missing_type(tmp_path: Path):
     errors = validate_bundle(bundle_dir)
 
     assert any("missing non-empty type" in error for error in errors)
+
+
+def test_validate_bundle_rejects_symlinked_markdown_files(tmp_path: Path):
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    for name in [
+        "index.md",
+        "log.md",
+        "report.md",
+        "findings.md",
+        "uncertainties.md",
+        "method.md",
+    ]:
+        (bundle_dir / name).write_text(
+            "---\ntype: concept\n---\n\n# Placeholder\n",
+            encoding="utf-8",
+        )
+    outside_file = tmp_path / "outside.md"
+    outside_file.write_text("---\ntype: external\n---\n\n# External\n", encoding="utf-8")
+    (bundle_dir / "external.md").symlink_to(outside_file)
+
+    errors = validate_bundle(bundle_dir)
+
+    assert any("markdown file must not be a symlink" in error for error in errors)

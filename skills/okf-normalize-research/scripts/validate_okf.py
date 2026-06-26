@@ -44,6 +44,10 @@ def validate_bundle(bundle_dir: Path) -> List[str]:
     for required in sorted(REQUIRED_FILES - present):
         errors.append(f"{bundle_dir}: missing required file {required}")
 
+    for path in sorted(bundle_dir.rglob("*.md")):
+        if path.is_symlink():
+            errors.append(f"{path}: markdown file must not be a symlink")
+
     for path in concept_files(bundle_dir):
         try:
             parse_frontmatter(path)
