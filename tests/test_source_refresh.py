@@ -974,6 +974,26 @@ def test_local_source_link_rejects_encoded_parent_directory_sources(tmp_path):
     assert "must not contain parent directory references" in result.message
 
 
+def test_local_source_link_rejects_current_directory_sources(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "./docs/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not contain current directory references" in result.message
+
+
+def test_local_source_link_rejects_encoded_current_directory_sources(tmp_path):
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "%2e/docs/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must not contain current directory references" in result.message
+
+
 def test_source_link_rejects_unsupported_url_schemes(tmp_path):
     result = source_refresh.check_link(
         source_refresh.SourceEntry("example-skill", "ftp://example.com/source.md"),
