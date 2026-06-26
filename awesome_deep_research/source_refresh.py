@@ -151,6 +151,15 @@ def has_repeated_path_separator(value: str) -> bool:
     return "//" in value
 
 
+def has_symlink_path_component(repo_root: Path, relative_path: Path) -> bool:
+    current = repo_root
+    for part in relative_path.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
+
+
 def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
     if any(character.isspace() for character in entry.source):
         return CheckResult(
@@ -614,6 +623,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} local source must not contain percent-encoded aliases",
+        )
+    if has_symlink_path_component(repo_root, Path(local_source_path)):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} local source must not contain symlinks",
         )
     local_path = (repo_root / local_source_path).resolve()
     try:

@@ -1436,6 +1436,37 @@ def test_local_source_link_rejects_repeated_path_separators(tmp_path):
     assert "local source must not contain repeated separators" in result.message
 
 
+def test_local_source_link_rejects_symlinked_files(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    target = docs_dir / "target.md"
+    target.write_text("source", encoding="utf-8")
+    (docs_dir / "source.md").symlink_to(target)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "docs/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain symlinks" in result.message
+
+
+def test_local_source_link_rejects_symlinked_directories(tmp_path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    linked_dir = tmp_path / "linked-docs"
+    linked_dir.symlink_to(docs_dir, target_is_directory=True)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "linked-docs/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "local source must not contain symlinks" in result.message
+
+
 @pytest.mark.parametrize("source", ["docs/.source.md", ".docs/source.md"])
 def test_local_source_link_rejects_hidden_path_components(tmp_path, source):
     result = source_refresh.check_link(
