@@ -78,6 +78,10 @@ def has_encoded_query_or_fragment_marker(value: str) -> bool:
     return decoded != value and ("?" in decoded or "#" in decoded)
 
 
+def has_encoded_path_alias(value: str) -> bool:
+    return unquote(value) != value
+
+
 def has_malformed_percent_encoding(value: str) -> bool:
     return bool(MALFORMED_PERCENT_ENCODING_RE.search(value))
 
@@ -181,6 +185,11 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} URL path must not contain current directory references",
+        )
+    if parsed.scheme in {"http", "https"} and has_encoded_path_alias(parsed.path):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL path must not contain percent-encoded aliases",
         )
     if parsed.scheme in {"http", "https"} and (
         parsed.username is not None or parsed.password is not None
@@ -441,6 +450,11 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} URL path must not contain current directory references",
+            )
+        if has_encoded_path_alias(parsed.path):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL path must not contain percent-encoded aliases",
             )
         if parsed.username is not None or parsed.password is not None:
             return CheckResult(

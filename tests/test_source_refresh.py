@@ -630,6 +630,35 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_remote_encoded_path_aliases(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://example.com/source%41.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and (
+            "example-skill: https://example.com/source%41.md "
+            "URL path must not contain percent-encoded aliases"
+        )
+        in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_remote_backslash_path_separators(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -822,6 +851,23 @@ Last refreshed: 2026-06-23.
         in result.message
         for result in results
     ), source_refresh.format_results(results)
+
+
+def test_link_checker_rejects_remote_encoded_path_aliases_before_http(monkeypatch):
+    def fail_get(*args, **kwargs):
+        raise AssertionError("HTTP should not be requested for encoded path aliases")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_get)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://example.com/%68elp"),
+    )
+
+    assert not result.ok
+    assert (
+        result.message
+        == "example-skill: https://example.com/%68elp URL path must not contain percent-encoded aliases"
+    )
 
 
 def test_source_index_checker_fails_absolute_local_source_paths(tmp_path):
