@@ -23,6 +23,7 @@ ROW_RE = re.compile(r"^\|\s*`([^`]*)`\s*\|\s*([^|]*?)\s*\|", re.MULTILINE)
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 ENCODED_PATH_SEPARATOR_RE = re.compile(r"%2f|%5c", re.IGNORECASE)
 MALFORMED_PERCENT_ENCODING_RE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+DNS_LABEL_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$", re.IGNORECASE)
 
 
 @dataclass
@@ -107,6 +108,21 @@ def has_non_global_ip_host(url: str) -> bool:
         return False
 
 
+def has_valid_dns_hostname(hostname: str) -> bool:
+    try:
+        ip_address(hostname)
+        return True
+    except ValueError:
+        pass
+
+    if len(hostname) > 253:
+        return False
+    labels = hostname.split(".")
+    if len(labels) < 2 or labels[-1].isdigit():
+        return False
+    return all(DNS_LABEL_RE.fullmatch(label) for label in labels)
+
+
 def has_valid_url_port(url: str) -> bool:
     try:
         urlparse(url).port
@@ -173,6 +189,18 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} host must not end with a dot",
         )
+    if parsed.scheme in {"http", "https"} and "\\" in entry.source:
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} URL must use forward slashes",
+        )
+    if parsed.scheme in {"http", "https"} and parsed.hostname and not has_valid_dns_hostname(
+        parsed.hostname
+    ):
+        return CheckResult(
+            False,
+            f"{entry.skill}: {entry.source} host must be a valid DNS name or IP address",
+        )
     if parsed.scheme in {"http", "https"} and not has_valid_url_port(entry.source):
         return CheckResult(
             False,
@@ -182,11 +210,6 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
         return CheckResult(
             False,
             f"{entry.skill}: {entry.source} IP host must be globally routable",
-        )
-    if parsed.scheme in {"http", "https"} and "\\" in entry.source:
-        return CheckResult(
-            False,
-            f"{entry.skill}: {entry.source} URL must use forward slashes",
         )
     if parsed.scheme in {"http", "https"} and has_repeated_path_separator(parsed.path):
         return CheckResult(
@@ -455,6 +478,16 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
                 False,
                 f"{entry.skill}: {entry.source} host must not end with a dot",
             )
+        if "\\" in entry.source:
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} URL must use forward slashes",
+            )
+        if parsed.hostname and not has_valid_dns_hostname(parsed.hostname):
+            return CheckResult(
+                False,
+                f"{entry.skill}: {entry.source} host must be a valid DNS name or IP address",
+            )
         if not has_valid_url_port(entry.source):
             return CheckResult(
                 False,
@@ -464,11 +497,6 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             return CheckResult(
                 False,
                 f"{entry.skill}: {entry.source} IP host must be globally routable",
-            )
-        if "\\" in entry.source:
-            return CheckResult(
-                False,
-                f"{entry.skill}: {entry.source} URL must use forward slashes",
             )
         if has_repeated_path_separator(parsed.path):
             return CheckResult(
