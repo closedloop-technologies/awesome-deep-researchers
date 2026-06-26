@@ -410,6 +410,31 @@ Last refreshed: 2026-06-23.
     ), source_refresh.format_results(results)
 
 
+def test_source_index_checker_fails_invalid_bracketed_remote_urls(tmp_path):
+    skills_root = tmp_path / "skills"
+    (skills_root / "example-skill").mkdir(parents=True)
+    index_path = skills_root / "provider-source-index.md"
+    index_path.write_text(
+        """# Provider Source Index
+
+Last refreshed: 2026-06-23.
+
+| Skill | Source |
+| --- | --- |
+| `example-skill` | https://[::1/source.md |
+""",
+        encoding="utf-8",
+    )
+
+    results = source_refresh.check_source_index(index_path, today=date(2026, 6, 23))
+
+    assert any(
+        not result.ok
+        and "example-skill: https://[::1/source.md must be a valid URL" in result.message
+        for result in results
+    ), source_refresh.format_results(results)
+
+
 def test_source_index_checker_fails_plain_http_sources(tmp_path):
     skills_root = tmp_path / "skills"
     (skills_root / "example-skill").mkdir(parents=True)
@@ -1512,6 +1537,21 @@ def test_source_link_rejects_plain_http_before_request(monkeypatch, tmp_path):
 
     assert result.ok is False
     assert "must use HTTPS" in result.message
+
+
+def test_source_link_rejects_invalid_bracketed_urls_before_request(monkeypatch, tmp_path):
+    def fail_request(*_args, **_kwargs):
+        raise AssertionError("HTTP request should not run")
+
+    monkeypatch.setattr(source_refresh.requests, "get", fail_request)
+
+    result = source_refresh.check_link(
+        source_refresh.SourceEntry("example-skill", "https://[::1/source.md"),
+        repo_root=tmp_path,
+    )
+
+    assert result.ok is False
+    assert "must be a valid URL" in result.message
 
 
 def test_source_link_rejects_invalid_timeout_before_request(monkeypatch, tmp_path):

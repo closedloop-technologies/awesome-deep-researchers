@@ -181,7 +181,10 @@ def validate_source_reference(entry: SourceEntry) -> CheckResult | None:
             False,
             f"{entry.skill}: {entry.source} must not contain encoded control characters",
         )
-    parsed = urlparse(entry.source)
+    try:
+        parsed = urlparse(entry.source)
+    except ValueError:
+        return CheckResult(False, f"{entry.skill}: {entry.source} must be a valid URL")
     if parsed.scheme == "http":
         return CheckResult(False, f"{entry.skill}: {entry.source} must use HTTPS")
     if parsed.scheme and parsed.scheme not in {"http", "https"}:
@@ -484,7 +487,10 @@ def check_link(entry: SourceEntry, repo_root: Path = REPO_ROOT, timeout: float =
             f"{entry.skill}: {entry.source} must not contain encoded control characters",
         )
 
-    parsed = urlparse(entry.source)
+    try:
+        parsed = urlparse(entry.source)
+    except ValueError:
+        return CheckResult(False, f"{entry.skill}: {entry.source} must be a valid URL")
     if parsed.scheme in {"http", "https"}:
         if parsed.scheme == "http":
             return CheckResult(False, f"{entry.skill}: {entry.source} must use HTTPS")
