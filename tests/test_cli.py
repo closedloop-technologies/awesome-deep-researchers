@@ -134,14 +134,26 @@ def test_ensure_output_dir_creates_directories(tmp_path: Path, monkeypatch, mode
     assert output_dir.is_dir()
 
 
-@pytest.mark.parametrize("requested", ["", "   ", "../outside"])
+@pytest.mark.parametrize(
+    ("requested", "message"),
+    [
+        ("", "--output-dir must be a non-empty path"),
+        ("   ", "--output-dir must be a non-empty path"),
+        (" outputs", "--output-dir must be trimmed"),
+        ("outputs\\test", "--output-dir must use forward slashes"),
+        ("outputs\x7f", "--output-dir must not contain control characters"),
+        ("./outputs", "--output-dir must not contain dot path segments"),
+        ("outputs/../outputs2", "--output-dir must not contain dot path segments"),
+        ("../outside", "--output-dir must not contain dot path segments"),
+    ],
+)
 def test_ensure_output_dir_rejects_invalid_paths(
-    tmp_path: Path, monkeypatch, requested: str
+    tmp_path: Path, monkeypatch, requested: str, message: str
 ):
     monkeypatch.setattr(cli, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(cli, "DEFAULT_OUTPUT_DIR", tmp_path / "default")
 
-    with pytest.raises(ValueError, match="--output-dir"):
+    with pytest.raises(ValueError, match=message):
         cli.ensure_output_dir(requested)
 
     assert not (tmp_path.parent / "outside").exists()
