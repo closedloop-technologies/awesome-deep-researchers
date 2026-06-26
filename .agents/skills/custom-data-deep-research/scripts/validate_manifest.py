@@ -120,6 +120,16 @@ def has_decoded_control_character(value: str) -> bool:
     return False
 
 
+def fully_unquote(value: str) -> str:
+    decoded_value = value
+    for _ in range(3):
+        previous_value = decoded_value
+        decoded_value = unquote(previous_value, errors="strict")
+        if decoded_value == previous_value:
+            return decoded_value
+    return decoded_value
+
+
 def is_safe_http_url(value: Any) -> bool:
     if not isinstance(value, str) or not value.strip():
         return False
@@ -133,7 +143,7 @@ def is_safe_http_url(value: Any) -> bool:
         return False
     if has_decoded_control_character(value):
         return False
-    decoded_value = unquote(value, errors="strict")
+    decoded_value = fully_unquote(value)
     if any(character.isspace() for character in decoded_value):
         return False
     try:

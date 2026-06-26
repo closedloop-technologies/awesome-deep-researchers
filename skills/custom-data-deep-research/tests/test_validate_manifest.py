@@ -101,10 +101,13 @@ def test_safe_relative_path_rejects_absolute_and_dot_segments():
     assert is_safe_relative_path("docs/report.pdf?download=1") is False
     assert is_safe_relative_path("docs/report.pdf#page=2") is False
     assert is_safe_relative_path("docs/%2e%2e/report.pdf") is False
+    assert is_safe_relative_path("docs/%252e%252e/report.pdf") is False
     assert is_safe_relative_path("docs%2freport.pdf") is False
     assert is_safe_relative_path("docs%5creport.pdf") is False
     assert is_safe_relative_path("docs/report%3fdownload.pdf") is False
+    assert is_safe_relative_path("docs/report%253fdownload.pdf") is False
     assert is_safe_relative_path("docs/report%23page.pdf") is False
+    assert is_safe_relative_path("docs/report%2523page.pdf") is False
     assert is_safe_relative_path("docs/report%2epdf") is False
     assert is_safe_relative_path("docs/report%zz.pdf") is False
 
@@ -118,6 +121,7 @@ def test_safe_http_url_requires_absolute_http_url_without_credentials():
     assert is_safe_http_url("https://user:token@example.com/report") is False
     assert is_safe_http_url("https://example.com/report\nnext") is False
     assert is_safe_http_url("https://example.com/bad%20path") is False
+    assert is_safe_http_url("https://example.com/search?q=bad%2520path") is False
     assert is_safe_http_url("https://example.com/bad%7fpath") is False
     assert is_safe_http_url("https://example.com/search?q=%2500") is False
     assert is_safe_http_url("https://example.com/report%2epdf") is False
