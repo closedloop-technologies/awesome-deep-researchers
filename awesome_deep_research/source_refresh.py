@@ -126,10 +126,12 @@ def has_valid_dns_hostname(hostname: str) -> bool:
 def has_valid_url_port(url: str) -> bool:
     try:
         parsed = urlparse(url)
-        parsed.port
+        port = parsed.port
     except ValueError:
         return False
     if parsed.netloc.rsplit("@", 1)[-1].endswith(":"):
+        return False
+    if port == 0:
         return False
     return True
 

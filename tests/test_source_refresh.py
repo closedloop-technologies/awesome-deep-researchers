@@ -578,6 +578,7 @@ Last refreshed: 2026-06-23.
     "source",
     [
         "https://example.com:bad/source.md",
+        "https://example.com:0/source.md",
         "https://example.com:/source.md",
     ],
 )
@@ -1646,13 +1647,17 @@ def test_source_link_rejects_malformed_remote_ports_before_request(monkeypatch, 
 
     monkeypatch.setattr(source_refresh.requests, "get", fail_request)
 
-    result = source_refresh.check_link(
-        source_refresh.SourceEntry("example-skill", "https://example.com:bad/source.md"),
-        repo_root=tmp_path,
-    )
+    for source in (
+        "https://example.com:bad/source.md",
+        "https://example.com:0/source.md",
+    ):
+        result = source_refresh.check_link(
+            source_refresh.SourceEntry("example-skill", source),
+            repo_root=tmp_path,
+        )
 
-    assert result.ok is False
-    assert "URL port must be numeric and in range" in result.message
+        assert result.ok is False
+        assert "URL port must be numeric and in range" in result.message
 
 
 def test_source_link_rejects_non_global_ip_hosts_before_request(monkeypatch, tmp_path):
