@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.validate_manifest import validate_manifest
+from scripts.validate_manifest import is_safe_relative_path, validate_manifest
 
 
 def valid_manifest():
@@ -81,3 +81,41 @@ def test_unsupported_source_type_fails():
     errors = validate_manifest(manifest)
 
     assert any("unsupported source_type" in error for error in errors)
+
+
+def test_safe_relative_path_rejects_absolute_and_dot_segments():
+    assert is_safe_relative_path("docs/report.pdf") is True
+    assert is_safe_relative_path("/docs/report.pdf") is False
+    assert is_safe_relative_path("../report.pdf") is False
+    assert is_safe_relative_path("docs/../report.pdf") is False
+    assert is_safe_relative_path("./report.pdf") is False
+
+
+def test_local_and_csv_paths_must_be_safe_relative_paths():
+    manifest = valid_manifest()
+    manifest["sources"][2]["path"] = "../private/report.pdf"
+    manifest["sources"].append(
+        {
+            "source_id": "csv-1",
+            "source_type": "csv",
+            "title": "Rows",
+            "citation_anchor": "row id",
+            "path": "/tmp/export.csv",
+            "sha256": "abc",
+            "schema": {"id": "string"},
+        }
+    )
+
+    errors = validate_manifest(manifest)
+
+    assert any("local-1: path must be a safe relative path" in error for error in errors)
+    assert any("csv-1: path must be a safe relative path" in error for error in errors)
+
+
+def test_s3_key_must_be_safe_relative_path():
+    manifest = valid_manifest()
+    manifest["sources"][3]["key"] = "exports/../private.json"
+
+    errors = validate_manifest(manifest)
+
+    assert any("s3-1: key must be a safe relative path" in error for error in errors)
