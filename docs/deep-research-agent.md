@@ -40,11 +40,28 @@ For private or domain-specific corpora, build a source manifest before
 synthesis. Guidance for Google Docs, YouTube, local files, S3, arXiv, databases,
 Slack, email, and tickets is in `docs/custom-data-sources.md`.
 
+## Access Modes
+
+Deep research systems should be labeled by deployment mode before comparing
+quality or cost:
+
+| Access Mode | Operational Boundary |
+| --- | --- |
+| Hosted API/Web | The provider owns the agent loop and exposes a hosted API or web UI. The local repo only submits prompts and captures outputs. |
+| API component | The provider exposes search, retrieval, reading, or model calls that a separate agent loop uses as tools. These are not full report-writing systems by themselves. |
+| Self-hosted library/framework | The agent loop runs locally or in our container. It may still call hosted LLM/search APIs, but orchestration, prompts, logs, and failure modes are under our control. |
+
+Deep Research Comparator uses a similar serving split: open-source agents are
+served from Dockerized agent services, while closed-source agents are reached
+through proxy pods that call external APIs. Its Simple Deepresearch baseline is
+a prompt-based scaffold that can wrap different LLMs through an OpenAI-compatible
+API.
+
 ## Call a Third-Party API
 
 Third-party APIs are better when the task needs fresh web data, citation
 handling, provider-maintained browsing, or a quick benchmark across systems.
-Use `.agents/skills/<provider>/SKILL.md` for exact command and environment
+Use `.agents/skills/<skill-name>/SKILL.md` for exact command and environment
 details. Store secrets in 1Password and run commands with `op run`:
 
 ```bash
