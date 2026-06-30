@@ -96,6 +96,7 @@ or model guidance.
 | [Tavily](https://tavily.com) | Search API | Use basic/fast depth and small result counts | LLM-optimized, clean text output |
 | [SerpAPI](https://serpapi.com) | Search API | Not wired into the current benchmark | Google Search scraping, structured data |
 | [Exa](https://exa.ai) | Neural Search | Cap search and content-read counts | Embedding-based, meaning-aware search |
+| [Xquik](https://docs.xquik.com/api-reference/x/search-tweets) | X/Twitter Data API | Use bounded result limits and date windows for social evidence collection | Tweet search, account timelines, engagement metrics |
 
 ### Vector & Knowledge Bases
 
@@ -112,7 +113,7 @@ Use these access modes consistently when adding systems:
 | Access Mode | Meaning | Examples |
 | --- | --- | --- |
 | Hosted API/Web | A proprietary or hosted agent endpoint/UI performs the deep-research workflow outside this repo. | OpenAI Deep Research, Gemini Deep Research, Perplexity DeepResearch, You.com Research |
-| API component | A retrieval, search, reader, or model API used inside a larger agent workflow rather than a full report-writing agent by itself. | Tavily Search, Exa Search, Jina Reader/Search |
+| API component | A retrieval, search, reader, or model API used inside a larger agent workflow rather than a full report-writing agent by itself. | Tavily Search, Exa Search, Jina Reader/Search, Xquik |
 | Self-hosted library/framework | Code runs in our environment or container, while model/search providers may still be external APIs. | GPT Researcher, LangChain Open Deep Research, STORM, Smolagents, Simple Deepresearch |
 
 ## API Skill and Benchmark Status
